@@ -1,0 +1,1369 @@
+Group {
+ inputs 6
+ knobChanged "__import__('sdf.path_march', fromlist='PathMarch').PathMarch().handle_knob_changed()"
+ addUserKnob {20 User l "Ray March"}
+ addUserKnob {3 min_paths_per_pixel l "min paths per pixel" t "The minimum number of paths to trace for each pixel. This is only used when a previous render with a 'variance' layer is plugged into the 'previous' input."}
+ min_paths_per_pixel 1
+ addUserKnob {3 max_paths_per_pixel l "max paths per pixel" t "The maximum paths to trace. If nothing is plugged into the 'previous' input, then each pixel will trace this many paths."}
+ max_paths_per_pixel 1
+ addUserKnob {6 roulette t "Randomly terminate rays with a probability proportional to the remaining strength, or throughput of a ray." +STARTLINE}
+ roulette true
+ addUserKnob {26 ""}
+ addUserKnob {7 ray_distance l "max distance" t "Each ray, once spawned is only allowed to travel this distance before it is culled." R 10 10000}
+ ray_distance 100
+ addUserKnob {3 max_ray_steps l "max ray steps" t "Limit the number of steps a ray can be marched before it is culled. Shadow rays are given half this number of steps."}
+ max_ray_steps 1000
+ addUserKnob {3 max_bounces l "max bounces" t "Limits the number of times the rays can intersect an object per subpixel."}
+ max_bounces 7
+ addUserKnob {7 hit_tolerance l "hit tolerance" t "The ray will be considered to have hit an object when it is within this distance of its surface" R 1e-06 0.01}
+ hit_tolerance 0.0001
+ addUserKnob {7 shadow_bias l "shadow bias" t "Increase the distance a ray is offset from a surface after intersecting by this factor." R 1 5}
+ shadow_bias 1
+ addUserKnob {7 max_brightness l "max brightness" t "The maximum brightness of a pixel. This protects against overflowing to infinity." R 1 1e+08}
+ max_brightness 100000000
+ addUserKnob {26 ""}
+ addUserKnob {13 seeds t "The seeds used to generate per-pixel, random seeds. Be sure to change this on each render used for adaptive sampling, or set the expression on these knobs to be `random()`"}
+ seeds {1 2 3}
+ addUserKnob {6 enable_dof l "enable depth of field" t "Enable the use of depth of field. The amount to defocus is driven by the camera parameters." +STARTLINE}
+ addUserKnob {6 level_of_detail l "dynamic level of detail" t "Increase the hit tolerance the farther the ray travels without hitting a surface. This has performance and antialiasing benefits." +STARTLINE}
+ level_of_detail true
+ addUserKnob {26 ""}
+ addUserKnob {3 max_light_sampling_bounces l "max light sampling bounces" t "The maximum number of bounces during light sampling. Light sampling will be disabled if this is 0. Light sampling means that each time a surface is hit, the direct illumination from lights in the scene will be computed, which helps to reduce noise very quickly."}
+ max_light_sampling_bounces 7
+ addUserKnob {6 sample_hdri l "sample hdri" t "Include the HDRI in the list of lights that can be sampled during light sampling." -STARTLINE}
+ addUserKnob {6 sample_all_lights l "sample all lights" t "Sample every light in the scene during light sampling, rather than just one random one. This will reduce noise quickly but slow things down." -STARTLINE}
+ sample_all_lights true
+ addUserKnob {7 light_sampling_bias l "light sampling bias" t "A fully biased (1) light sampling means that on each light sample the ray will be initialised pointing directly at the light. Reducing this bias means that some rays will be pointed away from the light. This, when combined with multiple 'max light sampling bounces' allows the renderer to find difficult paths, such as volumetric caustics."}
+ light_sampling_bias 1
+ addUserKnob {6 secondary_sampling l "secondary sampling" t "Sample the artificial lights (those in the 'lights' input) while casting shadow rays for light sampling." +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {3 equiangular_samples l "equi-angular samples" t "The number of equi-angular samples to perform if the extinction/scattering coefficients are greater than 0. This enables participating media such as fog/smoke/clouds to be traced."}
+ equiangular_samples 7
+ addUserKnob {6 sample_hdri_equiangular l "sample hdri" t "Sample the HDRI during equi-angular sampling. If there are no lights in the scene, this will allow you to see the participating media. With more than one light in the scene, this will increase noise." -STARTLINE}
+ addUserKnob {7 refractive_index l "refractive index" t "The index of refraction of the medium that the camera is currently in." R 1 4}
+ refractive_index 1
+ addUserKnob {18 extinction_colour l "extinction colour" t "The colour absorbed as light travels through the material that the camera is in."}
+ extinction_colour {0 0 0}
+ addUserKnob {7 extinction_coefficient l "extinction coefficient" t "The amount of energy lost as the light travells through the material." R 0 10}
+ addUserKnob {18 scattering_colour l "scattering colour" t "The colour being scattered by the participating media."}
+ scattering_colour {1 1 1}
+ addUserKnob {7 scattering_coefficient l "scattering coefficient" t "The amount of light being scattered by the participating media."}
+ addUserKnob {26 ""}
+ addUserKnob {7 hdri_offset_angle l "hdri offset angle" t "Rotate the hdri image by this amount around the y-axis." R 0 360}
+ addUserKnob {26 ""}
+ addUserKnob {6 use_precomputed_irradiance l "use precomputed irradiance" t "Use precomputed irradiance on diffuse bounces. This will mean that noise is all but illiminated imediately, and so will be fast, but will not give correct occlusion, or indirect illumination." +STARTLINE}
+ addUserKnob {7 hdri_lighting_scale l "hdri irradiance scale" t "The amount to scale the precomputed irradiance. A smaller scale will improve memory usage and lookup times." R 0.1 1}
+ hdri_lighting_scale 0.25
+ addUserKnob {3 hdri_irradiance_samples l "hdri irradiance samples" t "The number of samples to use when precomputing the irradiance."}
+ hdri_irradiance_samples 100
+ addUserKnob {7 hdri_lighting_blur l "hdri irradiance blur" t "The amount to blur the precomputed irradiance. This can be necessary to increase when there are small, very bright, points in the HDRI, because they will not be sampled smoothly and quickly." R 0 10}
+ hdri_lighting_blur 10
+ addUserKnob {26 ""}
+ addUserKnob {3 variance_range l "variance range" t "The number of adjacent pixels that will contribute to the variance of a pixel for the variance AOV which is automatically output."}
+ variance_range 1
+ addUserKnob {26 ""}
+ addUserKnob {4 output_type l output t "The AOV type to output.\n\nThe stats AOV has the average number of steps in the red channel, the average number of bounces in the green channel, and the total number of paths that have been traced for a pixel in the blue channel." M {Beauty "World Position" "Local Position" Normal Depth Stats "" "" "" "" "" "" "" "" ""}}
+ addUserKnob {41 format t "The format to output." T format_.format}
+ addUserKnob {6 latlong l LatLong t "Output a LatLong, 360 degree field of view image." +STARTLINE}
+ addUserKnob {26 ""}
+ addUserKnob {26 info l "" +STARTLINE T "v2.1.0 - (c) Owen Bulka - 2022"}
+}
+ BackdropNode {
+  inputs 0
+  name Lights
+  xpos -1501
+  ypos -1617
+  bdwidth 410
+  bdheight 851
+ }
+ BackdropNode {
+  inputs 0
+  name Objects
+  xpos -1012
+  ypos -1616
+  bdwidth 2366
+  bdheight 866
+ }
+ Input {
+  inputs 0
+  name camera
+  xpos 1390
+  ypos -1570
+  number 1
+ }
+ Camera {
+  projection_mode {{"\[expression \[value the_cam]projection_mode(\[value the_frame])]"}}
+  focal {{"\[expression \[value the_cam]focal(\[value the_frame])]"}}
+  haperture {{"\[expression \[value the_cam]haperture(\[value the_frame])]"}}
+  vaperture {{"\[expression \[value the_cam]vaperture(\[value the_frame])]"}}
+  near {{"\[expression \[value the_cam]near(\[value the_frame])]"}}
+  far {{"\[expression \[value the_cam]far(\[value the_frame])]"}}
+  win_translate {{"\[expression \[value the_cam]win_translate.u(\[value the_frame])]"} {"\[expression \[value the_cam]win_translate.v(\[value the_frame])]"}}
+  win_scale {{"\[expression \[value the_cam]win_scale.u(\[value the_frame])]"} {"\[expression \[value the_cam]win_scale.v(\[value the_frame])]"}}
+  winroll {{"\[expression \[value the_cam]winroll(\[value the_frame])]"}}
+  focal_point {{"\[expression \[value the_cam]focal_point(\[value the_frame])]"}}
+  fstop {{"\[expression \[value the_cam]fstop(\[value the_frame])]"}}
+  name DummyCam
+  help "DummyCam by Adrian Pueyo\n\nCamera that apart from the matrices also grabs all the \"Projection\" values from the upstream camera that it's connected to. Turns into a default Camera if no Camera connected. Can also be used inside of groups and gizmos, as many levels deep as you want :D All using live and super fast TCL.\n\nUpdated v1.1: Now grabs the correct frame too (thanks Erwan Leroy for the idea).\n\nUpdated v1.3: Now accepts Nuke13's Camera3\n\nadrianpueyo.com, 2019-2021"
+  onCreate "n = nuke.thisNode()\nfor k in \[\"projection_mode\",\"focal\",\"haperture\",\"vaperture\",\"near\",\"far\",\"win_translate\",\"win_scale\",\"winroll\",\"focal_point\",\"fstop\"]:\n    n\[k].setFlag(0x0000000010000000)"
+  xpos 1400
+  ypos -1470
+  addUserKnob {20 DummyCam l Defaults}
+  addUserKnob {43 the_cam +INVISIBLE}
+  the_cam "\[\n#DummyCam v1.3 - Updated 5 May 2021.\nset starting_point \"this.input0\"\nset default \"this.d_\"\n\n# If cam has no inputs, return the default.\nif \{\[exists \$starting_point]\} \{\n    set x \[node \$starting_point]\n\} \{ \n    return \$default\n\}\n\nset finished 0\nwhile \{\$finished != 1\} \{\n\n    # First look for a Cam or Input or topnode.\n    while \{\[class \$x] != \"Camera3\" && \[class \$x] != \"Camera2\" && \[class \$x] != \"Camera\" && \[class \$x] != \"Input\" && \$x != \[topnode \$x]\} \{\n        set x \[node \$x.input0]\n    \}\n\n    # Then, check if node is a cam (and return), and otherwise, if it's an input, see if the parent exists and move to it.\n    if \{\[class \$x]==\"Camera3\"||\[class \$x]==\"Camera2\"||\[class \$x]==\"Camera\"\} \{\n        set x \[append x \".\"]\n        return \$x\n    \} \{ \n        if \{ \[class \$x]==\"Input\" \} \{ \n            set inp \"\$x.parent.input\"\n            set inputNum \[value \$x.number]\n            set inp \[append inp \$inputNum]\n            if \{ \[exists \$inp] \} \{\n                set x \[node \$inp]\n            \} \{ \n                set finished 1\n            \}\n        \} \{ \n            set finished 1\n        \}\n    \}\n\}\nreturn \$default\n]"
+  addUserKnob {43 the_frame +INVISIBLE}
+  the_frame "\[\nset the_camera \[string trimright \[value the_cam] .]\nif \{\[exists \$the_camera]\} \{\n    return \[value \$the_camera.frame]\n\} \{ \n    return \[frame]\n\}\n]"
+  addUserKnob {4 d_projection_mode l projection M {perspective orthographic uv spherical ""}}
+  addUserKnob {7 d_focal l "focal length" R 0 100}
+  d_focal 50
+  addUserKnob {7 d_haperture l "horiz aperture" R 0 50}
+  d_haperture 24.576
+  addUserKnob {7 d_vaperture l "vert aperture" R 0 50}
+  d_vaperture 18.672
+  addUserKnob {7 d_near l near R 0 10}
+  d_near 0.1
+  addUserKnob {7 d_far l far R 0 10000}
+  d_far 10000
+  addUserKnob {30 d_win_translate l "window translate"}
+  addUserKnob {30 d_win_scale l "window scale"}
+  d_win_scale {1 1}
+  addUserKnob {7 d_winroll l "window roll" R 0 45}
+  addUserKnob {7 d_focal_point l "focal distance" R 0 10}
+  d_focal_point 2
+  addUserKnob {7 d_fstop l fstop R 0 30}
+  d_fstop 16
+  addUserKnob {26 version l " " t "Updated 5 May 2021" T "<span style=\"color:#666\"><br/><b>DummyCam v1.3</b> - <a href=\"http://www.adrianpueyo.com\" style=\"color:#666;text-decoration: none;\">adrianpueyo.com</a>, 2019-2021</span>"}
+ }
+ Constant {
+  inputs 0
+  format "2 1 0 0 2 1 1 lights"
+  name Constant3
+  xpos 1500
+  ypos -1545
+ }
+ Input {
+  inputs 0
+  name hdri
+  xpos 1610
+  ypos -1594
+  number 2
+ }
+ Merge2 {
+  inputs 2
+  name Merge1
+  xpos 1610
+  ypos -1522
+ }
+ Reformat {
+  type scale
+  format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+  black_outside true
+  name Reformat5
+  xpos 1610
+  ypos -1498
+ }
+ Dot {
+  name hdri_dot
+  xpos 1644
+  ypos -1453
+ }
+set Nd276e20 [stack 0]
+ Reformat {
+  type scale
+  scale {{"floor(min(parent.hdri_dot.height, parent.hdri_dot.width) * parent.hdri_lighting_scale) > 0 ? parent.hdri_lighting_scale : 1"}}
+  resize fill
+  name Reformat
+  xpos 1720
+  ypos -1457
+ }
+ Blur {
+  size {{parent.hdri_lighting_blur}}
+  name Blur2
+  xpos 1720
+  ypos -1415
+ }
+ BlinkScript {
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/hdri_irradiance.blink
+  recompileCount 124
+  ProgramGroup 1
+  KernelDescription "2 \"HDRIrradiance\" iterate pixelWise 4fa4ec41cd2454b183501b9818f4ffb89ac8c635382155a0db4a6ab53708bae2 2 \"hdri\" Read Random \"dst\" Write Point 1 \"Samples\" Int 2 ZAAAADIAAAA= 1 \"_samples\" 2 1 3 \"__hdriPixelSize\" Float 2 1 AAAAAAAAAAA= \"__up\" Float 3 1 AAAAAAAAAAAAAAAAAAAAAA== \"__sampleStep\" Float 2 1 AAAAAAAAAAA="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n\n\nkernel HDRIrradiance : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessRandom, eEdgeClamped> hdri; // the input image\n    Image<eWrite> dst; // the output image\n\n    param:\n        int2 _samples;\n\n    local:\n        float2 __hdriPixelSize;\n        float3 __up;\n        float2 __sampleStep;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_samples, \"Samples\", int2(100, 50));\n    \}\n\n\n    /**\n     * Initialize the local variables.\n     */\n    void init()\n    \{\n        __hdriPixelSize = float2(hdri.bounds.width() / (2.0f * PI), hdri.bounds.height() / PI);\n        __up = float3(0, 1, 0);\n\n        __sampleStep = float2(\n            2.0f * PI / (float) _samples.x,\n            PI / (2.0f * (float) _samples.y)\n        );\n    \}\n\n\n    /**\n     * Get the value of hdri the ray would hit at infinite distance\n     *\n     * @arg rayDirection: The direction of the ray.\n     *\n     * @returns: The colour of the pixel in the direction of the ray.\n     */\n    float4 readHDRIValue(float3 rayDirection)\n    \{\n        const float2 angles = cartesionUnitVectorToSpherical(rayDirection);\n\n        // Why does bilinear give nans? :(\n        return hdri(\n            round(__hdriPixelSize.x * angles.x) - 1,\n            round(hdri.bounds.height() - (__hdriPixelSize.y * angles.y)) - 1\n        );\n    \}\n\n\n    /**\n     * Compute the irradiance of a pixel.\n     *\n     * @arg pos: The x, and y location we are currently processing.\n     */\n    void process(int2 pos)\n    \{\n        const float2 uvPosition = pixelsToUV(\n            float2(pos.x, pos.y),\n            float2(hdri.bounds.width(), hdri.bounds.height())\n        );\n        const float3 direction = sphericalUnitVectorToCartesion(\n            uvPositionToAngles(uvPosition)\n        );\n\n        const float3 tangentRight = normalize(cross(__up, direction));\n        const float3 tangentUp = normalize(cross(direction, tangentRight));\n\n        float4 irradiance = float4(0);\n\n        for (float theta = 0.0f; theta < 2.0f * PI; theta += __sampleStep.x)\n        \{\n            for (float phi = PI / 2.0f; phi > 0.0f; phi -= __sampleStep.y)\n            \{\n                const float3 tangent = sphericalUnitVectorToCartesion(float2(theta, phi));\n                const float3 sampleDirection = (\n                    tangent.x * tangentRight\n                    + tangent.z * tangentUp\n                    + tangent.y * direction\n                );\n\n                irradiance += readHDRIValue(sampleDirection) * cos(phi) * sin(phi);\n            \}\n        \}\n\n        dst() = PI * irradiance / (float) (_samples.x * _samples.y);\n    \}\n\};\n"
+  rebuild ""
+  HDRIrradiance_Samples {{parent.hdri_irradiance_samples} {parent.hdri_irradiance_samples/2}}
+  rebuild_finalise ""
+  name HDRIrradiance
+  xpos 1720
+  ypos -1363
+ }
+ Reformat {
+  type scale
+  format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
+  black_outside true
+  name Reformat3
+  xpos 1720
+  ypos -1305
+ }
+ Dot {
+  name Dot33
+  xpos 1754
+  ypos -558
+ }
+ Constant {
+  inputs 0
+  format "1 1 0 0 1 1 1 1x1"
+  name Constant4
+  xpos -1996
+  ypos -1704
+ }
+ Dot {
+  name Dot7
+  xpos -1962
+  ypos -1533
+ }
+set N88f8d60 [stack 0]
+ Dot {
+  name Dot25
+  xpos -1522
+  ypos -1533
+ }
+set N88fd510 [stack 0]
+ Dot {
+  name Dot15
+  xpos -1522
+  ypos -1437
+ }
+push $N88fd510
+ Input {
+  inputs 0
+  name lights
+  xpos -1446
+  ypos -1585
+  number 4
+ }
+ Merge2 {
+  inputs 2
+  name light_merge
+  xpos -1446
+  ypos -1489
+ }
+ Group {
+  inputs 2
+  name light_input_protection
+  xpos -1446
+  ypos -1441
+  disable {{"width > 1"}}
+  addUserKnob {20 User}
+  addUserKnob {26 warning l Warning: T "Only merge lights with lights, and primitives with primitives"}
+ }
+  Reformat {
+   inputs 0
+   type "to box"
+   box_width 1
+   box_height 1
+   box_fixed true
+   name Reformat1
+   xpos -119
+   ypos 440
+  }
+  Input {
+   inputs 0
+   name Input2
+   xpos 158
+   ypos -28
+   number 1
+  }
+  Dot {
+   name Dot2
+   xpos 192
+   ypos -2
+  }
+set Na741680 [stack 0]
+  Dot {
+   name Dot3
+   xpos 329
+   ypos -2
+  }
+  Dot {
+   name Dot4
+   xpos 329
+   ypos 391
+  }
+  Input {
+   inputs 0
+   name Input1
+   xpos 0
+   ypos -32
+  }
+  Dot {
+   name Dot1
+   xpos 34
+   ypos -6
+  }
+set Naab1150 [stack 0]
+  Dot {
+   name Dot6
+   xpos -98
+   ypos -6
+  }
+  Dot {
+   name Dot5
+   xpos -98
+   ypos 336
+  }
+push $Na741680
+  Crop {
+   box {0 0 {Dot1.width+Dot2.width} 1}
+   reformat true
+   crop false
+   name Crop3
+   xpos 158
+   ypos 69
+  }
+  Crop {
+   box {0 0 {parent.Dot2.width} 1}
+   name Crop4
+   xpos 158
+   ypos 95
+  }
+  Transform {
+   translate {{parent.Dot1.width} 0}
+   center {1 0.5}
+   name Transform2
+   xpos 158
+   ypos 121
+  }
+  Crop {
+   box {0 0 {width} {height}}
+   crop false
+   name Crop5
+   xpos 158
+   ypos 167
+  }
+push $Naab1150
+  Crop {
+   box {0 0 {Dot1.width+Dot2.width} 1}
+   reformat true
+   crop false
+   name Crop6
+   xpos 0
+   ypos 66
+  }
+  Crop {
+   box {0 0 {parent.Dot1.width} 1}
+   name Crop7
+   xpos 0
+   ypos 92
+  }
+  Crop {
+   box {0 0 {width} {height}}
+   crop false
+   name Crop8
+   xpos 0
+   ypos 164
+  }
+  Merge2 {
+   inputs 2
+   also_merge all
+   name Merge1
+   xpos 0
+   ypos 262
+   disable {{"\[exists parent.input1] ? 0:1"}}
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input1] ? 0:1"}}
+   name Switch2
+   xpos 0
+   ypos 332
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input0] ? 0:1"}}
+   name Switch1
+   xpos 0
+   ypos 387
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input0] ? 0:\[exists parent.input1] ? 0:1"}}
+   name Switch3
+   xpos 0
+   ypos 456
+  }
+  Dot {
+   name out_dot
+   xpos 36
+   ypos 518
+  }
+  Output {
+   name Output1
+   xpos 2
+   ypos 661
+  }
+ end_group
+ Dot {
+  name light_dot
+  xpos -1412
+  ypos -1293
+ }
+set Na7da030 [stack 0]
+add_layer {sdf_light_properties1 sdf_light_properties1.shadow_hardness sdf_light_properties1.falloff}
+ Shuffle {
+  in sdf_light_properties1
+  blue green
+  alpha green
+  name light_props1
+  xpos -1226
+  ypos -985
+ }
+ Dot {
+  name Dot22
+  xpos -1192
+  ypos -813
+ }
+push $Na7da030
+add_layer {sdf_light_properties sdf_light_properties.colour_r sdf_light_properties.colour_g sdf_light_properties.colour_b sdf_light_properties.type}
+ Shuffle {
+  in sdf_light_properties
+  name light_props
+  xpos -1336
+  ypos -985
+ }
+ Dot {
+  name Dot23
+  xpos -1302
+  ypos -813
+ }
+push $Na7da030
+add_layer {sdf_light sdf_light.light_pos_dir_x sdf_light.light_pos_dir_y sdf_light.light_pos_dir_z sdf_light.intensity}
+ Shuffle {
+  in sdf_light
+  name light
+  xpos -1446
+  ypos -985
+ }
+ Dot {
+  name Dot24
+  xpos -1412
+  ypos -813
+ }
+push $N88fd510
+ Dot {
+  name Dot16
+  xpos -929
+  ypos -1533
+ }
+set N1aae5d80 [stack 0]
+ Dot {
+  name Dot36
+  xpos 501
+  ypos -1533
+ }
+ Input {
+  inputs 0
+  name noise
+  xpos 577
+  ypos -1585
+  number 5
+ }
+ Merge2 {
+  inputs 2
+  name noise_merge
+  xpos 577
+  ypos -1489
+ }
+push $N1aae5d80
+ Input {
+  inputs 0
+  name scene
+  xpos -853
+  ypos -1585
+ }
+ Merge2 {
+  inputs 2
+  name object_merge
+  xpos -853
+  ypos -1489
+ }
+ Dot {
+  name Dot37
+  xpos -819
+  ypos -1437
+ }
+set N1ab49cb0 [stack 0]
+ Group {
+  inputs 2
+  name noise_sdf_merge
+  xpos 577
+  ypos -1441
+  addUserKnob {20 User}
+  addUserKnob {26 warning l Warning: T "Only merge lights with lights, and primitives with primitives"}
+ }
+  Reformat {
+   inputs 0
+   type "to box"
+   box_width 1
+   box_height 1
+   box_fixed true
+   name Reformat1
+   xpos -119
+   ypos 440
+  }
+  Input {
+   inputs 0
+   name Input2
+   xpos 158
+   ypos -28
+   number 1
+  }
+  Dot {
+   name Dot2
+   xpos 192
+   ypos -2
+  }
+set N1abfd7c0 [stack 0]
+  Dot {
+   name Dot3
+   xpos 329
+   ypos -2
+  }
+  Dot {
+   name Dot4
+   xpos 329
+   ypos 391
+  }
+  Input {
+   inputs 0
+   name Input1
+   xpos 0
+   ypos -32
+  }
+  Dot {
+   name Dot1
+   xpos 34
+   ypos -6
+  }
+set N1ac11410 [stack 0]
+  Dot {
+   name Dot6
+   xpos -98
+   ypos -6
+  }
+  Dot {
+   name Dot5
+   xpos -98
+   ypos 336
+  }
+push $N1abfd7c0
+  Crop {
+   box {0 0 {Dot1.width+Dot2.width} 1}
+   reformat true
+   crop false
+   name Crop3
+   xpos 158
+   ypos 69
+  }
+  Crop {
+   box {0 0 {parent.Dot2.width} 1}
+   name Crop4
+   xpos 158
+   ypos 95
+  }
+  Transform {
+   translate {{parent.Dot1.width} 0}
+   center {1 0.5}
+   name Transform2
+   xpos 158
+   ypos 121
+  }
+  Crop {
+   box {0 0 {width} {height}}
+   crop false
+   name Crop5
+   xpos 158
+   ypos 167
+  }
+push $N1ac11410
+  Crop {
+   box {0 0 {Dot1.width+Dot2.width} 1}
+   reformat true
+   crop false
+   name Crop6
+   xpos 0
+   ypos 66
+  }
+  Crop {
+   box {0 0 {parent.Dot1.width} 1}
+   name Crop7
+   xpos 0
+   ypos 92
+  }
+  Crop {
+   box {0 0 {width} {height}}
+   crop false
+   name Crop8
+   xpos 0
+   ypos 164
+  }
+  Merge2 {
+   inputs 2
+   also_merge all
+   name Merge1
+   xpos 0
+   ypos 262
+   disable {{"\[exists parent.input1] ? 0:1"}}
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input1] ? 0:1"}}
+   name Switch2
+   xpos 0
+   ypos 332
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input0] ? 0:1"}}
+   name Switch1
+   xpos 0
+   ypos 387
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input0] ? 0:\[exists parent.input1] ? 0:1"}}
+   name Switch3
+   xpos 0
+   ypos 456
+  }
+  Dot {
+   name out_dot
+   xpos 36
+   ypos 518
+  }
+  Output {
+   name Output1
+   xpos 2
+   ypos 661
+  }
+ end_group
+ Dot {
+  name Dot35
+  xpos 611
+  ypos -1221
+ }
+set N1ad84bf0 [stack 0]
+add_layer {sdf_noise_params6 sdf_noise_params6.highFrequencyTranslationX sdf_noise_params6.highFrequencyTranslationY sdf_noise_params6.highFrequencyTranslationZ sdf_noise_params6.highFrequencyTranslationW}
+ Shuffle {
+  in sdf_noise_params6
+  name noise_params6
+  xpos 1233
+  ypos -982
+ }
+ Dot {
+  name Dot46
+  xpos 1267
+  ypos -815
+ }
+push $N1ad84bf0
+add_layer {sdf_noise_params5 sdf_noise_params5.lowFrequencyTranslationX sdf_noise_params5.lowFrequencyTranslationY sdf_noise_params5.lowFrequencyTranslationZ sdf_noise_params5.lowFrequencyTranslationW}
+ Shuffle {
+  in sdf_noise_params5
+  name noise_params5
+  xpos 1122
+  ypos -984
+ }
+ Dot {
+  name Dot45
+  xpos 1156
+  ypos -814
+ }
+push $N1ad84bf0
+add_layer {sdf_noise_params4 sdf_noise_params4.highFrequencyX sdf_noise_params4.highFrequencyY sdf_noise_params4.highFrequencyZ sdf_noise_params4.highFrequencyW}
+ Shuffle {
+  in sdf_noise_params4
+  name noise_params4
+  xpos 1013
+  ypos -987
+ }
+ Dot {
+  name Dot44
+  xpos 1047
+  ypos -815
+ }
+push $N1ad84bf0
+add_layer {sdf_noise_params3 sdf_noise_params3.lowFrequencyX sdf_noise_params3.lowFrequencyY sdf_noise_params3.lowFrequencyZ sdf_noise_params3.lowFrequencyW}
+ Shuffle {
+  in sdf_noise_params3
+  name noise_params3
+  xpos 911
+  ypos -986
+ }
+ Dot {
+  name Dot43
+  xpos 945
+  ypos -814
+ }
+push $N1ad84bf0
+add_layer {sdf_noise_params2 sdf_noise_params2.size sdf_noise_params2.white_point sdf_noise_params2.black_point sdf_noise_params2.lift}
+ Shuffle {
+  in sdf_noise_params2
+  name noise_params2
+  xpos 797
+  ypos -985
+ }
+ Dot {
+  name Dot28
+  xpos 831
+  ypos -813
+ }
+push $N1ad84bf0
+add_layer {sdf_noise_params1 sdf_noise_params1.octaves sdf_noise_params1.lacunarity sdf_noise_params1.gain sdf_noise_params1.gamma}
+ Shuffle {
+  in sdf_noise_params1
+  name noise_params1
+  xpos 687
+  ypos -985
+ }
+ Dot {
+  name Dot26
+  xpos 721
+  ypos -813
+ }
+push $N1ad84bf0
+add_layer {sdf_noise_params0 sdf_noise_params0.noise_options sdf_noise_params0.translationX sdf_noise_params0.translationY sdf_noise_params0.translationZ sdf_noise_params0.options sdf_noise_params0.x sdf_noise_params0.y sdf_noise_params0.z}
+ Shuffle {
+  in sdf_noise_params0
+  name noise_params0
+  xpos 577
+  ypos -985
+ }
+ Dot {
+  name Dot27
+  xpos 611
+  ypos -813
+ }
+push $N1aae5d80
+ Dot {
+  name Dot1
+  xpos -929
+  ypos -1365
+ }
+push $N1ab49cb0
+ Group {
+  inputs 2
+  name object_input_protection
+  xpos -853
+  ypos -1369
+  disable {{"width > 1"}}
+  addUserKnob {20 User}
+  addUserKnob {26 warning l Warning: T "Only merge lights with lights, and primitives with primitives"}
+ }
+  Reformat {
+   inputs 0
+   type "to box"
+   box_width 1
+   box_height 1
+   box_fixed true
+   name Reformat1
+   xpos -119
+   ypos 440
+  }
+  Input {
+   inputs 0
+   name Input2
+   xpos 158
+   ypos -28
+   number 1
+  }
+  Dot {
+   name Dot2
+   xpos 192
+   ypos -2
+  }
+set N1ae44110 [stack 0]
+  Dot {
+   name Dot3
+   xpos 329
+   ypos -2
+  }
+  Dot {
+   name Dot4
+   xpos 329
+   ypos 391
+  }
+  Input {
+   inputs 0
+   name Input1
+   xpos 0
+   ypos -32
+  }
+  Dot {
+   name Dot1
+   xpos 34
+   ypos -6
+  }
+set N1ae57d60 [stack 0]
+  Dot {
+   name Dot6
+   xpos -98
+   ypos -6
+  }
+  Dot {
+   name Dot5
+   xpos -98
+   ypos 336
+  }
+push $N1ae44110
+  Crop {
+   box {0 0 {Dot1.width+Dot2.width} 1}
+   reformat true
+   crop false
+   name Crop3
+   xpos 158
+   ypos 69
+  }
+  Crop {
+   box {0 0 {parent.Dot2.width} 1}
+   name Crop4
+   xpos 158
+   ypos 95
+  }
+  Transform {
+   translate {{parent.Dot1.width} 0}
+   center {1 0.5}
+   name Transform2
+   xpos 158
+   ypos 121
+  }
+  Crop {
+   box {0 0 {width} {height}}
+   crop false
+   name Crop5
+   xpos 158
+   ypos 167
+  }
+push $N1ae57d60
+  Crop {
+   box {0 0 {Dot1.width+Dot2.width} 1}
+   reformat true
+   crop false
+   name Crop6
+   xpos 0
+   ypos 66
+  }
+  Crop {
+   box {0 0 {parent.Dot1.width} 1}
+   name Crop7
+   xpos 0
+   ypos 92
+  }
+  Crop {
+   box {0 0 {width} {height}}
+   crop false
+   name Crop8
+   xpos 0
+   ypos 164
+  }
+  Merge2 {
+   inputs 2
+   also_merge all
+   name Merge1
+   xpos 0
+   ypos 262
+   disable {{"\[exists parent.input1] ? 0:1"}}
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input1] ? 0:1"}}
+   name Switch2
+   xpos 0
+   ypos 332
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input0] ? 0:1"}}
+   name Switch1
+   xpos 0
+   ypos 387
+  }
+  Switch {
+   inputs 2
+   which {{"\[exists parent.input0] ? 0:\[exists parent.input1] ? 0:1"}}
+   name Switch3
+   xpos 0
+   ypos 456
+  }
+  Dot {
+   name out_dot
+   xpos 36
+   ypos 518
+  }
+  Output {
+   name Output1
+   xpos 2
+   ypos 661
+  }
+ end_group
+ Dot {
+  name obj_dot
+  xpos -819
+  ypos -1317
+ }
+set N1aee8030 [stack 0]
+add_layer {sdf_surface sdf_surface.reflection sdf_surface.transmission sdf_surface.emission sdf_surface.roughness}
+ Shuffle {
+  in sdf_surface
+  name surface
+  xpos 357
+  ypos -985
+ }
+ Dot {
+  name Dot2
+  xpos 391
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_shape_mods_1 sdf_shape_mods_1.elongation_x sdf_shape_mods_1.elongation_y sdf_shape_mods_1.elongation_z sdf_shape_mods_1.edge_radius}
+ Shuffle {
+  in sdf_shape_mods_1
+  name shape_mods_1
+  xpos 247
+  ypos -985
+ }
+ Dot {
+  name Dot12
+  xpos 281
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_shape_mods_0 sdf_shape_mods_0.repetion_x sdf_shape_mods_0.repetion_y sdf_shape_mods_0.repetion_z sdf_shape_mods_0.repetion_w}
+ Shuffle {
+  in sdf_shape_mods_0
+  name shape_mods_0
+  xpos 137
+  ypos -985
+ }
+ Dot {
+  name Dot3
+  xpos 171
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_shape sdf_shape.shape_type sdf_shape.shape_operations sdf_shape.num_children sdf_shape.blend_strength}
+ Shuffle {
+  in sdf_shape
+  name shape
+  xpos 27
+  ypos -985
+ }
+ Dot {
+  name Dot4
+  xpos 61
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_scattering_colour sdf_scattering_colour.red sdf_scattering_colour.green sdf_scattering_colour.blue}
+ Shuffle {
+  in sdf_scattering_colour
+  name scattering_colour
+  xpos -83
+  ypos -985
+ }
+ Dot {
+  name Dot38
+  xpos -49
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_emm_colour sdf_emm_colour.r sdf_emm_colour.g sdf_emm_colour.b sdf_emm_colour.x}
+ Shuffle {
+  in sdf_emm_colour
+  name emm_colour
+  xpos -193
+  ypos -985
+ }
+ Dot {
+  name Dot20
+  xpos -159
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_trans_colour sdf_trans_colour.r sdf_trans_colour.g sdf_trans_colour.b sdf_trans_colour.x}
+ Shuffle {
+  in sdf_trans_colour
+  name trans_colour
+  xpos -303
+  ypos -985
+ }
+ Dot {
+  name Dot19
+  xpos -269
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_spec_colour sdf_spec_colour.r sdf_spec_colour.g sdf_spec_colour.b sdf_spec_colour.x}
+ Shuffle {
+  in sdf_spec_colour
+  name spec_colour
+  xpos -413
+  ypos -985
+ }
+ Dot {
+  name Dot18
+  xpos -379
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_colour sdf_colour.colour_r sdf_colour.colour_g sdf_colour.colour_b sdf_colour.colour_a}
+ Shuffle {
+  in sdf_colour
+  name diff_colour
+  xpos -523
+  ypos -985
+ }
+ Dot {
+  name Dot5
+  xpos -489
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_dimensions sdf_dimensions.dimension_x sdf_dimensions.dimension_y sdf_dimensions.dimension_z sdf_dimensions.dimension_w}
+ Shuffle {
+  in sdf_dimensions
+  name dimensions
+  xpos -633
+  ypos -985
+ }
+ Dot {
+  name Dot10
+  xpos -599
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_rotation_wall_thickness sdf_rotation_wall_thickness.rotation_x sdf_rotation_wall_thickness.rotation_y sdf_rotation_wall_thickness.rotation_z sdf_rotation_wall_thickness.wall_thickness}
+ Shuffle {
+  in sdf_rotation_wall_thickness
+  name rotation_wall_thickness
+  xpos -743
+  ypos -985
+ }
+ Dot {
+  name Dot9
+  xpos -709
+  ypos -813
+ }
+push $N1aee8030
+add_layer {sdf_position_scale sdf_position_scale.position_x sdf_position_scale.position_y sdf_position_scale.position_z sdf_position_scale.uniform_scale}
+ Shuffle {
+  in sdf_position_scale
+  name position_scale
+  xpos -853
+  ypos -985
+ }
+ Dot {
+  name Dot6
+  xpos -819
+  ypos -813
+ }
+push $Nd276e20
+push $N88f8d60
+ Reformat {
+  format {{{parent.format_.format}}}
+  name Reformat2
+  xpos -1996
+  ypos -1489
+ }
+set N1aff3910 [stack 0]
+ Input {
+  inputs 0
+  name previous
+  xpos -1886
+  ypos -1609
+  number 3
+ }
+ Merge2 {
+  inputs 2
+  name previous_merge
+  xpos -1886
+  ypos -1489
+ }
+ Dot {
+  name Dot14
+  xpos -1852
+  ypos -1365
+ }
+set N1b018980 [stack 0]
+add_layer {variance variance.red variance.green variance.blue variance.num_paths}
+ Shuffle {
+  in variance
+  name Shuffle1
+  xpos -1886
+  ypos -1321
+ }
+push $N1aff3910
+ Invert {
+  channels rgb
+  name Invert2
+  xpos -1996
+  ypos -1297
+ }
+ Switch {
+  inputs 2
+  which {{"\[exists parent.input3]"}}
+  name Switch2
+  xpos -1886
+  ypos -1297
+ }
+ Dot {
+  name Dot13
+  xpos -1852
+  ypos -453
+ }
+push $N1b018980
+ Dot {
+  name Dot34
+  xpos -1742
+  ypos -1365
+ }
+ Dot {
+  name Dot21
+  xpos -1742
+  ypos -597
+ }
+ Constant {
+  inputs 0
+  channels {rgba.red rgba.green rgba.blue -rgba.alpha}
+  name format_
+  xpos 1830
+  ypos -707
+ }
+ Noise {
+  output {rgba.red -rgba.green -rgba.blue -rgba.alpha}
+  type turbulence
+  size 1
+  zoffset {{parent.seeds.x}}
+  lacunarity 1.6
+  center {512 389}
+  name Noise1
+  xpos 1830
+  ypos -636
+ }
+ Noise {
+  output {-rgba.red rgba.green -rgba.blue -rgba.alpha}
+  type turbulence
+  size 1
+  zoffset {{parent.seeds.y}}
+  center {512 389}
+  name Noise2
+  xpos 1830
+  ypos -612
+ }
+ Noise {
+  output {-rgba.red -rgba.green rgba.blue -rgba.alpha}
+  type turbulence
+  size 1
+  zoffset {{parent.seeds.z}}
+  lacunarity 2.14
+  center {512 389}
+  name Noise3
+  xpos 1830
+  ypos -588
+ }
+ Noise {
+  output {-rgba.red -rgba.green -rgba.blue rgba.alpha}
+  type turbulence
+  size 1
+  zoffset {{parent.seeds.z}}
+  lacunarity 2.14
+  center {512 389}
+  name Noise4
+  xpos 1830
+  ypos -562
+ }
+ BlinkScript {
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/random.blink
+  recompileCount 8
+  ProgramGroup 1
+  KernelDescription "2 \"Random\" iterate pixelWise f51a1ffdf1b096c3af17073edd1520221f207854b2f525ed29f01e133fbdefd4 2 \"seed\" Read Point \"dst\" Write Point 1 \"Inclusive Range\" Float 2 AAAAAAAAgD8= 1 \"_inclusiveRange\" 2 1 1 \"__rangeLength\" Float 1 1 AAAAAA=="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n#include \"random.h\"\n\n\nkernel Random : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessPoint, eEdgeNone> seed; // the input image\n    Image<eWrite> dst; // the output image\n\n\n    param:\n        float2 _inclusiveRange;\n\n    local:\n        float __rangeLength;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_inclusiveRange, \"Inclusive Range\", float2(0, 1));\n    \}\n\n\n    /**\n     * Initialize the local variables.\n     */\n    void init()\n    \{\n        __rangeLength = _inclusiveRange.y - _inclusiveRange.x;\n    \}\n\n\n    /**\n     * Compute a random pixel value.\n     */\n    void process()\n    \{\n        dst() = __rangeLength * random(seed()) + _inclusiveRange.x;\n    \}\n\};\n"
+  rebuild ""
+  rebuild_finalise ""
+  name BlinkScript7
+  xpos 1830
+  ypos -524
+ }
+ Dot {
+  name resolution_dot
+  xpos 1864
+  ypos -462
+ }
+ Reformat {
+  format {{{parent.format_.format}}}
+  name Reformat1
+  xpos 1610
+  ypos -434
+ }
+ Expression {
+  expr0 "isnan(r) ? 0 : (isinf(r) ? parent.max_brightness : clamp(r, -parent.max_brightness, parent.max_brightness))"
+  expr1 "isnan(g) ? 0 : (isinf(g) ? parent.max_brightness : clamp(g, -parent.max_brightness, parent.max_brightness))"
+  expr2 "isnan(b) ? 0 : (isinf(b) ? parent.max_brightness : clamp(b, -parent.max_brightness, parent.max_brightness))"
+  name Expression1
+  xpos 1610
+  ypos -408
+ }
+ Dot {
+  name Dot11
+  xpos 1644
+  ypos -270
+ }
+set N1b0c6760 [stack 0]
+ BlinkScript {
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/decode_alpha.blink
+  recompileCount 3
+  ProgramGroup 1
+  KernelDescription "2 \"DecodeAlpha\" iterate pixelWise 1c4995e5ef3c4395ca22dae32e63f03d3c8b0eb4c438ef32fcb399691563ff7d 2 \"src\" Read Point \"dst\" Write Point 0 0 0"
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"conversion.h\"\n\n\nkernel DecodeAlpha : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessPoint, eEdgeNone> src; // the input image\n    Image<eWrite> dst; // the output image\n\n\n    /**\n     * Decode the multiple values stored in the alpha channel.\n     */\n    void process()\n    \{\n        SampleType(src) srcPixel = src();\n\n        const int2 decoded = decodeTwoValuesFromUint(srcPixel.w);\n        dst() = float4(decoded.x, decoded.y, 0, 0);\n    \}\n\};\n"
+  rebuild ""
+  rebuild_finalise ""
+  name BlinkScript1
+  xpos 1610
+  ypos -40
+ }
+set N1b0cb780 [stack 0]
+push $N1b0c6760
+ Dot {
+  name Dot8
+  xpos 1754
+  ypos -270
+ }
+ ShuffleCopy {
+  inputs 2
+  in2 rgb
+  alpha red
+  green2 green2
+  name ShuffleCopy2
+  xpos 1720
+  ypos -34
+ }
+push $N1b0c6760
+ BlinkScript {
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/variance.blink
+  recompileCount 18
+  KernelDescription "2 \"Variance\" iterate pixelWise 9ffe5cb17cce3fe6b29c96cc653303e51591ce19298e8dbdc053847856d3fddc 2 \"src\" Read Ranged2D \"dst\" Write Point 1 \"Range\" Float 2 AABAQAAAQEA= 1 \"_range\" 2 1 3 \"srcrangeMin\" Int 2 1 AAAAAAAAAAA= \"srcrangeMax\" Int 2 1 AAAAAAAAAAA= \"__numSamples\" Float 1 1 AAAAAA=="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n\n\nkernel Variance : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessRanged2D, eEdgeClamped> src; // the input image\n    Image<eWrite> dst; // the output image\n\n    param:\n        float2 _range;\n\n    local:\n        float __numSamples;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_range, \"Range\", float2(3, 3));\n    \}\n\n\n    /**\n     * Initialize the local variables.\n     */\n    void init()\n    \{\n        src.setRange(-_range.x, -_range.y, _range.x, _range.y);\n\n        __numSamples = (2.0f * _range.x + 1.0f) * (2.0f * _range.y + 1.0f);\n    \}\n\n\n    /**\n     * Compute the variance of a pixel.\n     * \n     * @arg pos: The x, and y location we are currently processing.\n     */\n    void process(int2 pos)\n    \{\n        float4 mean = float4(0);\n        for (int yOffset=-_range.y; yOffset <= _range.y; yOffset++)\n        \{\n            for (int xOffset=-_range.x; xOffset <= _range.x; xOffset++)\n            \{\n                mean += src(xOffset, yOffset) / __numSamples;\n            \}\n        \}\n\n        float4 sumOfSquares = float4(0);\n        for (int yOffset=-_range.y; yOffset <= _range.y; yOffset++)\n        \{\n            for (int xOffset=-_range.x; xOffset <= _range.x; xOffset++)\n            \{\n                const float4 sample = src(xOffset, yOffset);\n\n                const float4 deviation = src(xOffset, yOffset) - mean;\n\n                sumOfSquares += deviation * deviation / (__numSamples - 1.0f);\n            \}\n        \}\n\n        dst() = sumOfSquares;\n    \}\n\};\n"
+  rebuild ""
+  Variance_Range {{parent.variance_range} {parent.variance_range}}
+  rebuild_finalise ""
+  name BlinkScript2
+  xpos 1500
+  ypos -280
+ }
+ Dot {
+  name Dot17
+  xpos 1534
+  ypos -222
+ }
+set N1b111900 [stack 0]
+ BlinkScript {
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/minMax.blink
+  recompileCount 8
+  KernelDescription "2 \"MinMaxMeanDeviation\" iterate pixelWise d658e53ec264cb72124ab1c5eeaddc8daaefd311b02e7e408e47a126f7c2db06 2 \"src\" Read Random \"dst\" Write Point 1 \"Inclusive Range\" Float 1 80/DRw== 1 \"_maximum\" 1 1 1 \"__numSamples\" Float 1 1 AAAAAA=="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n\n\nkernel MinMaxMeanDeviation : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessRandom, eEdgeNone> src; // the input image\n    Image<eWrite> dst; // the output image\n\n    param:\n        float _maximum;\n\n    local:\n        float __numSamples;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_maximum, \"Inclusive Range\", 99999.9f);\n    \}\n\n\n    /**\n     * Initialize the local variables.\n     */\n    void init()\n    \{\n        __numSamples = 3.0f * src.bounds.width() * src.bounds.height();\n    \}\n\n\n    /**\n     * Compute the min max and standard deviation of the image.\n     *\n     * @arg pos: The x, and y location we are currently processing.\n     */\n    void process(int2 pos)\n    \{\n        if (length(float2(pos.x, pos.y)) > 0)\n        \{\n            dst() = 0;\n            return;\n        \}\n\n        float minValue = FLT_MAX;\n        float maxValue = 0.0f;\n        float mean = 0.0f;\n\n        for (int y=src.bounds.y1; y < src.bounds.y2; y++)\n        \{\n            for (int x=src.bounds.x1; x < src.bounds.x2; x++)\n            \{\n                const float3 pixelValue = float3(\n                    src(x, y, 0),\n                    src(x, y, 1),\n                    src(x, y, 2)\n                );\n\n                minValue = min(minValue, minComponent(pixelValue));\n                maxValue = max(maxValue, maxComponent(pixelValue));\n\n                mean += sumComponent(pixelValue) / __numSamples;\n            \}\n        \}\n\n        float standardDeviation = 0.0f;\n\n        for (int y=src.bounds.y1; y < src.bounds.y2; y++)\n        \{\n            for (int x=src.bounds.x1; x < src.bounds.x2; x++)\n            \{\n                const float3 pixelValue = float3(\n                    src(x, y, 0),\n                    src(x, y, 1),\n                    src(x, y, 2)\n                );\n\n                const float deviation = sumComponent(fabs(pixelValue - mean));\n\n                standardDeviation += min(deviation * deviation, _maximum) / __numSamples;\n            \}\n        \}\n\n        dst() = float4(minValue, maxValue, mean, sqrt(standardDeviation));\n    \}\n\};\n"
+  rebuild ""
+  "MinMaxMeanDeviation_Inclusive Range" 99999.99
+  rebuild_finalise ""
+  name BlinkScript3
+  xpos 1390
+  ypos -232
+ }
+ Dot {
+  name Dot29
+  xpos 1424
+  ypos -150
+ }
+push $N1b111900
+ BlinkScript {
+  inputs 2
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/normalize.blink
+  recompileCount 11
+  KernelDescription "2 \"Normalize\" iterate pixelWise 5a966d373c338a72f091ff982ef82b54a18f6a1983de644d989df8ef81655617 3 \"src\" Read Point \"minMax\" Read Random \"dst\" Write Point 2 \"Normalization Method\" Int 1 AAAAAA== \"Clamp To Standard Deviation\" Bool 1 AA== 2 \"_normalizationMethod\" 1 1 \"_clampToStdDev\" 1 1 1 \"minMaxconstEdgeColor\" Float 4 1 AAAAAAAAAAAAAAAAAAAAAA=="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n\n\nkernel Normalize : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessPoint, eEdgeNone> src; // the input image\n    Image<eRead, eAccessRandom, eEdgeConstant> minMax; // the input image\n    Image<eWrite> dst; // the output image\n\n\n    param:\n        int _normalizationMethod;\n        bool _clampToStdDev;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_normalizationMethod, \"Normalization Method\", 0);\n        defineParam(_clampToStdDev, \"Clamp To Standard Deviation\", false);\n    \}\n\n\n    /**\n     * The normalized values.\n     */\n    void process()\n    \{\n        float minValue = minMax(0, 0, 0);\n        float maxValue = minMax(0, 0, 1);\n        const float meanValue = minMax(0, 0, 2);\n        const float standardDeviationValue = minMax(0, 0, 3);\n\n        float4 srcValue;\n        if (_clampToStdDev)\n        \{\n            const float lowerBound = meanValue - standardDeviationValue;\n            const float upperBound = meanValue + standardDeviationValue;\n\n            srcValue = clamp(src(), lowerBound, upperBound);\n            minValue = clamp(minValue, lowerBound, upperBound);\n            maxValue = clamp(maxValue, lowerBound, upperBound);\n        \}\n        else\n        \{\n            srcValue = src();\n        \}\n\n        float4 output;\n\n        if (_normalizationMethod == 0 && minValue != maxValue)\n        \{\n            dst() = (srcValue - minValue) / (maxValue - minValue);\n        \}\n        else if (_normalizationMethod == 1 && standardDeviationValue != 0.0f)\n        \{\n            dst() = (srcValue - meanValue) / standardDeviationValue;\n        \}\n        else\n        \{\n            dst() = 0.0f;\n        \}\n    \}\n\};\n"
+  rebuild ""
+  "Normalize_Normalization Method" 1
+  rebuild_finalise ""
+  name BlinkScript4
+  xpos 1500
+  ypos -160
+ }
+ Dot {
+  name Dot31
+  xpos 1534
+  ypos -102
+ }
+set N1b1bc7e0 [stack 0]
+ BlinkScript {
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/minMax.blink
+  recompileCount 8
+  KernelDescription "2 \"MinMaxMeanDeviation\" iterate pixelWise d658e53ec264cb72124ab1c5eeaddc8daaefd311b02e7e408e47a126f7c2db06 2 \"src\" Read Random \"dst\" Write Point 1 \"Inclusive Range\" Float 1 80/DRw== 1 \"_maximum\" 1 1 1 \"__numSamples\" Float 1 1 AAAAAA=="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n\n\nkernel MinMaxMeanDeviation : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessRandom, eEdgeNone> src; // the input image\n    Image<eWrite> dst; // the output image\n\n    param:\n        float _maximum;\n\n    local:\n        float __numSamples;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_maximum, \"Inclusive Range\", 99999.9f);\n    \}\n\n\n    /**\n     * Initialize the local variables.\n     */\n    void init()\n    \{\n        __numSamples = 3.0f * src.bounds.width() * src.bounds.height();\n    \}\n\n\n    /**\n     * Compute the min max and standard deviation of the image.\n     *\n     * @arg pos: The x, and y location we are currently processing.\n     */\n    void process(int2 pos)\n    \{\n        if (length(float2(pos.x, pos.y)) > 0)\n        \{\n            dst() = 0;\n            return;\n        \}\n\n        float minValue = FLT_MAX;\n        float maxValue = 0.0f;\n        float mean = 0.0f;\n\n        for (int y=src.bounds.y1; y < src.bounds.y2; y++)\n        \{\n            for (int x=src.bounds.x1; x < src.bounds.x2; x++)\n            \{\n                const float3 pixelValue = float3(\n                    src(x, y, 0),\n                    src(x, y, 1),\n                    src(x, y, 2)\n                );\n\n                minValue = min(minValue, minComponent(pixelValue));\n                maxValue = max(maxValue, maxComponent(pixelValue));\n\n                mean += sumComponent(pixelValue) / __numSamples;\n            \}\n        \}\n\n        float standardDeviation = 0.0f;\n\n        for (int y=src.bounds.y1; y < src.bounds.y2; y++)\n        \{\n            for (int x=src.bounds.x1; x < src.bounds.x2; x++)\n            \{\n                const float3 pixelValue = float3(\n                    src(x, y, 0),\n                    src(x, y, 1),\n                    src(x, y, 2)\n                );\n\n                const float deviation = sumComponent(fabs(pixelValue - mean));\n\n                standardDeviation += min(deviation * deviation, _maximum) / __numSamples;\n            \}\n        \}\n\n        dst() = float4(minValue, maxValue, mean, sqrt(standardDeviation));\n    \}\n\};\n"
+  rebuild ""
+  "MinMaxMeanDeviation_Inclusive Range" 99999.99
+  rebuild_finalise ""
+  name BlinkScript5
+  xpos 1390
+  ypos -112
+ }
+ Dot {
+  name Dot32
+  xpos 1424
+  ypos -30
+ }
+push $N1b1bc7e0
+ BlinkScript {
+  inputs 2
+  kernelSourceFile /home/ob1/software/nuke/dev/raymarch/src/blink/kernels/normalize.blink
+  recompileCount 10
+  KernelDescription "2 \"Normalize\" iterate pixelWise 5a966d373c338a72f091ff982ef82b54a18f6a1983de644d989df8ef81655617 3 \"src\" Read Point \"minMax\" Read Random \"dst\" Write Point 2 \"Normalization Method\" Int 1 AAAAAA== \"Clamp To Standard Deviation\" Bool 1 AA== 2 \"_normalizationMethod\" 1 1 \"_clampToStdDev\" 1 1 1 \"minMaxconstEdgeColor\" Float 4 1 AAAAAAAAAAAAAAAAAAAAAA=="
+  kernelSource "// Copyright 2022 by Owen Bulka.\n// All rights reserved.\n// This file is released under the \"MIT License Agreement\".\n// Please see the LICENSE.md file that should have been included as part\n// of this package.\n\n#include \"math.h\"\n\n\nkernel Normalize : ImageComputationKernel<ePixelWise>\n\{\n    Image<eRead, eAccessPoint, eEdgeNone> src; // the input image\n    Image<eRead, eAccessRandom, eEdgeConstant> minMax; // the input image\n    Image<eWrite> dst; // the output image\n\n\n    param:\n        int _normalizationMethod;\n        bool _clampToStdDev;\n\n\n    /**\n     * Give the parameters labels and default values.\n     */\n    void define()\n    \{\n        defineParam(_normalizationMethod, \"Normalization Method\", 0);\n        defineParam(_clampToStdDev, \"Clamp To Standard Deviation\", false);\n    \}\n\n\n    /**\n     * The normalized values.\n     */\n    void process()\n    \{\n        float minValue = minMax(0, 0, 0);\n        float maxValue = minMax(0, 0, 1);\n        const float meanValue = minMax(0, 0, 2);\n        const float standardDeviationValue = minMax(0, 0, 3);\n\n        float4 srcValue;\n        if (_clampToStdDev)\n        \{\n            const float lowerBound = meanValue - standardDeviationValue;\n            const float upperBound = meanValue + standardDeviationValue;\n\n            srcValue = clamp(src(), lowerBound, upperBound);\n            minValue = clamp(minValue, lowerBound, upperBound);\n            maxValue = clamp(maxValue, lowerBound, upperBound);\n        \}\n        else\n        \{\n            srcValue = src();\n        \}\n\n        float4 output;\n\n        if (_normalizationMethod == 0 && minValue != maxValue)\n        \{\n            dst() = (srcValue - minValue) / (maxValue - minValue);\n        \}\n        else if (_normalizationMethod == 1 && standardDeviationValue != 0.0f)\n        \{\n            dst() = (srcValue - meanValue) / standardDeviationValue;\n        \}\n        else\n        \{\n            dst() = 0.0f;\n        \}\n    \}\n\};\n"
+  rebuild ""
+  "Normalize_Clamp To Standard Deviation" true
+  rebuild_finalise ""
+  name BlinkScript6
+  xpos 1500
+  ypos -40
+ }
+ Dot {
+  name Dot30
+  xpos 1534
+  ypos 90
+ }
+push $N1b0cb780
+ ShuffleCopy {
+  inputs 2
+  in rgb
+  in2 rgb
+  red red
+  green green
+  blue blue
+  alpha green2
+  black red
+  white green
+  red2 blue
+  green2 green2
+  out variance
+  name ShuffleCopy1
+  xpos 1610
+  ypos 86
+ }
+ Copy {
+  inputs 2
+  channels all
+  name Copy1
+  xpos 1720
+  ypos 74
+ }
+ Output {
+  name Output1
+  xpos 1720
+  ypos 182
+ }
+end_group

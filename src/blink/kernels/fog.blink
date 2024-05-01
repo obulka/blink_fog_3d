@@ -1,0 +1,3780 @@
+// Copyright 2022 by Owen Bulka.
+// All rights reserved.
+// This file is released under the "MIT License Agreement".
+// Please see the LICENSE.md file that should have been included as part
+// of this package.
+
+
+//
+// Matrix and vector math operations
+//
+
+#define PI_BY_TWO (PI / 2.0f)
+#define TWO_PI (2.0f * PI)
+
+
+/**
+ * Convert degrees to radians.
+ *
+ * @arg angle: The angle in degrees.
+ *
+ * @returns: The angle in radians.
+ */
+inline float degreesToRadians(const float angle)
+{
+    return angle * PI / 180.0f;
+}
+
+
+/**
+ * Convert radians to degrees.
+ *
+ * @arg angle: The angle in radians.
+ *
+ * @returns: The angle in degrees.
+ */
+inline float radiansToDegrees(const float angle)
+{
+    return angle * 180.0f / PI;
+}
+
+
+/**
+ * Convert degrees to radians.
+ *
+ * @arg angle: The angle in degrees.
+ *
+ * @returns: The angle in radians.
+ */
+inline float2 degreesToRadians(const float2 &angle)
+{
+    return angle * PI / 180.0f;
+}
+
+
+/**
+ * Convert radians to degrees.
+ *
+ * @arg angle: The angle in radians.
+ *
+ * @returns: The angle in degrees.
+ */
+inline float2 radiansToDegrees(const float2 &angle)
+{
+    return angle * 180.0f / PI;
+}
+
+
+/**
+ * Convert degrees to radians.
+ *
+ * @arg angle: The angle in degrees.
+ *
+ * @returns: The angle in radians.
+ */
+inline float3 degreesToRadians(const float3 &angle)
+{
+    return angle * PI / 180.0f;
+}
+
+
+/**
+ * Convert radians to degrees.
+ *
+ * @arg angle: The angle in radians.
+ *
+ * @returns: The angle in degrees.
+ */
+inline float3 radiansToDegrees(const float3 &angle)
+{
+    return angle * 180.0f / PI;
+}
+
+
+/**
+ * Compute the fractional portion of the value. Ex. 3.5 returns 0.5
+ *
+ * @arg value: The value to get the fractional portion of.
+ *
+ * @returns: The fractional portion of the value.
+ */
+inline float fract(const float value)
+{
+    return value - floor(value);
+}
+
+
+/**
+ * The minimum of three values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg value2: The third value.
+ *
+ * @returns: The minimum of the three values.
+ */
+inline float min(const float value0, const float value1, const float value2)
+{
+    return min(value0, min(value1, value2));
+}
+
+
+/**
+ * The maximum of three values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg value2: The third value.
+ *
+ * @returns: The maximum of the three values.
+ */
+inline float max(const float value0, const float value1, const float value2)
+{
+    return max(value0, max(value1, value2));
+}
+
+
+/**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * @arg value: The value to saturate
+ *
+ * @returns: The clamped value
+ */
+inline float saturate(float value)
+{
+    return clamp(value, 0.0f, 1.0f);
+}
+
+
+/**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * @arg value: The value to saturate
+ *
+ * @returns: The clamped value
+ */
+inline float2 saturate(const float2 &value)
+{
+    return clamp(value, float2(0), float2(1));
+}
+
+
+/**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * @arg value: The value to saturate
+ *
+ * @returns: The clamped value
+ */
+inline float3 saturate(const float3 &value)
+{
+    return clamp(value, float3(0), float3(1));
+}
+
+
+/**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * @arg value: The value to saturate
+ *
+ * @returns: The clamped value
+ */
+inline float4 saturate(const float4 &value)
+{
+    return clamp(value, float4(0), float4(1));
+}
+
+
+/**
+ * Custom clamp for int3 because the builtin clamp fails to compile for
+ * int3.
+ *
+ * @arg value: The value to clamp.
+ * @arg lower: The lower bound to clamp to.
+ * @arg upper: The upper bound to clamp to.
+ *
+ * @returns: The clamped value.
+ */
+inline int3 clamp_(const int3 value, const int3 lower, const int3 upper)
+{
+    int3 result;
+    result.x = clamp(value.x, lower.x, upper.x);
+    result.y = clamp(value.y, lower.y, upper.y);
+    result.z = clamp(value.z, lower.y, upper.z);
+
+    return result;
+}
+
+
+/**
+ * Clamp vector components between float values.
+ *
+ * @arg value: The value to clamp.
+ * @arg lower: The lower bound to clamp to.
+ * @arg upper: The upper bound to clamp to.
+ *
+ * @returns: The clamped value.
+ */
+inline float2 clamp(const float2 &value, const float lower, const float upper)
+{
+    return clamp(value, float2(lower), float2(upper));
+}
+
+
+/**
+ * Clamp vector components between float values.
+ *
+ * @arg value: The value to clamp.
+ * @arg lower: The lower bound to clamp to.
+ * @arg upper: The upper bound to clamp to.
+ *
+ * @returns: The clamped value.
+ */
+inline float3 clamp(const float3 &value, const float lower, const float upper)
+{
+    return clamp(value, float3(lower), float3(upper));
+}
+
+
+/**
+ * Clamp vector components between float values.
+ *
+ * @arg value: The value to clamp.
+ * @arg lower: The lower bound to clamp to.
+ * @arg upper: The upper bound to clamp to.
+ *
+ * @returns: The clamped value.
+ */
+inline float4 clamp(const float4 &value, const float lower, const float upper)
+{
+    return clamp(value, float4(lower), float4(upper));
+}
+
+
+/**
+ * Custom round for int3 because the builtin round fails to compile for
+ * int3.
+ *
+ * @arg value: The value to round.
+ *
+ * @returns: The rounded value.
+ */
+inline int3 round_(const float3 value)
+{
+    return int3(round(value.x), round(value.y), round(value.z));
+}
+
+
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
+inline float sumComponent(const float2 &vector)
+{
+    return vector.x + vector.y;
+}
+
+
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
+inline float sumComponent(const float3 &vector)
+{
+    return vector.x + vector.y + vector.z;
+}
+
+
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
+inline float sumComponent(const float4 &vector)
+{
+    return vector.x + vector.y + vector.z + vector.w;
+}
+
+
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
+inline int sumComponent(const int2 &vector)
+{
+    return vector.x + vector.y;
+}
+
+
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
+inline int sumComponent(const int3 &vector)
+{
+    return vector.x + vector.y + vector.z;
+}
+
+
+/**
+ * Sum the components of a vector.
+ *
+ * @arg vector: The vector to sum the components of.
+ *
+ * @returns: The sum of the components.
+ */
+inline int sumComponent(const int4 &vector)
+{
+    return vector.x + vector.y + vector.z + vector.w;
+}
+
+
+/**
+ * The maximum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The maximum component of the vector.
+ */
+inline float maxComponent(const float2 &vector)
+{
+    return max(vector.x, vector.y);
+}
+
+
+/**
+ * The maximum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The maximum component of the vector.
+ */
+inline float maxComponent(const float3 &vector)
+{
+    return max(vector.x, max(vector.y, vector.z));
+}
+
+
+/**
+ * The maximum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The maximum component of the vector.
+ */
+inline float maxComponent(const float4 &vector)
+{
+    return max(vector.x, max(vector.y, max(vector.z, vector.w)));
+}
+
+
+/**
+ * The minimum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The minimum component of the vector.
+ */
+inline float minComponent(const float2 &vector)
+{
+    return min(vector.x, vector.y);
+}
+
+
+/**
+ * The minimum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The minimum component of the vector.
+ */
+inline float minComponent(const float3 &vector)
+{
+    return min(vector.x, min(vector.y, vector.z));
+}
+
+
+/**
+ * The minimum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The minimum component of the vector.
+ */
+inline float minComponent(const float4 &vector)
+{
+    return min(vector.x, min(vector.y, min(vector.z, vector.w)));
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+inline float4 positivePart(const float4 &vector)
+{
+    return max(vector, float4(0));
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+inline float3 positivePart(const float3 &vector)
+{
+    return max(vector, float3(0));
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+inline float2 positivePart(const float2 &vector)
+{
+    return max(vector, float2(0));
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+inline float positivePart(const float value)
+{
+    return max(value, 0.0f);
+}
+
+
+/**
+ * The negative part of the vector. Ie. any positive values will be 0,
+ * and the negative values will be positive.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The negative part of the vector.
+ */
+inline float3 negativePart(const float3 &vector)
+{
+    return -min(vector, float3(0));
+}
+
+
+/**
+ * The negative part of the vector. Ie. any positive values will be 0,
+ * and the negative values will be positive.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The negative part of the vector.
+ */
+inline float2 negativePart(const float2 &vector)
+{
+    return -min(vector, float2(0));
+}
+
+
+/**
+ * The negative part of the vector. Ie. any positive values will be 0,
+ * and the negative values will be positive.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The negative part of the vector.
+ */
+inline float negativePart(const float value)
+{
+    return -min(value, 0.0f);
+}
+
+
+/**
+ * Dot product of a vector with itself.
+ *
+ * @arg vector: The vector to take the dot product of.
+ *
+ * @returns: The dot product.
+ */
+inline float dot2(const float2 &vector)
+{
+    return dot(vector, vector);
+}
+
+
+/**
+ * Dot product of a vector with itself.
+ *
+ * @arg vector: The vector to take the dot product of.
+ *
+ * @returns: The dot product.
+ */
+inline float dot2(const float3 &vector)
+{
+    return dot(vector, vector);
+}
+
+
+/**
+ * Dot product of a vector with itself.
+ *
+ * @arg vector: The vector to take the dot product of.
+ *
+ * @returns: The dot product.
+ */
+inline float dot2(const float4 &vector)
+{
+    return dot(vector, vector);
+}
+
+
+/**
+ * Check whether or not two vectors are identical.
+ *
+ * @arg vector0: The first vector to compare.
+ * @arg vector1: The other vector to compare.
+ *
+ * @returns: True if the vectors are identical.
+ */
+inline bool vectorsAreEqual(const float2 &vector0, const float2 &vector1)
+{
+    return vector0.x == vector1.x && vector0.y == vector1.y;
+}
+
+
+/**
+ * Check whether or not two vectors are identical.
+ *
+ * @arg vector0: The first vector to compare.
+ * @arg vector1: The other vector to compare.
+ *
+ * @returns: True if the vectors are identical.
+ */
+inline bool vectorsAreEqual(const float3 &vector0, const float3 &vector1)
+{
+    return vector0.x == vector1.x && vector0.y == vector1.y && vector0.z == vector1.z;
+}
+
+
+/**
+ * Check whether or not two vectors are identical.
+ *
+ * @arg vector0: The first vector to compare.
+ * @arg vector1: The other vector to compare.
+ *
+ * @returns: True if the vectors are identical.
+ */
+inline bool vectorsAreEqual(const float4 &vector0, const float4 &vector1)
+{
+    return (
+        vector0.x == vector1.x
+        && vector0.y == vector1.y
+        && vector0.z == vector1.z
+        && vector0.w == vector1.w
+    );
+}
+
+
+/**
+ * Get a rotation matrix from radian angle values in ZYX order.
+ *
+ * @arg angles: The rotation angles in radians.
+ * @arg out: The location to store the rotation matrix.
+ */
+inline void rotationMatrix(const float3 &angles, float3x3 &out)
+{
+    const float3 cosAngles = cos(angles);
+    const float3 sinAngles = sin(angles);
+
+    // Why tf can I not init a float3x3 normally??
+    out[0][0] = cosAngles.y * cosAngles.z;
+    out[0][1] = sinAngles.x * sinAngles.y * cosAngles.z - cosAngles.x * sinAngles.z;
+    out[0][2] = cosAngles.x * sinAngles.y * cosAngles.z + sinAngles.x * sinAngles.z;
+    out[1][0] = cosAngles.y * sinAngles.z;
+    out[1][1] = sinAngles.x * sinAngles.y * sinAngles.z + cosAngles.x * cosAngles.z;
+    out[1][2] = cosAngles.x * sinAngles.y * sinAngles.z - sinAngles.x * cosAngles.z;
+    out[2][0] = -sinAngles.y;
+    out[2][1] = sinAngles.x * cosAngles.y;
+    out[2][2] = cosAngles.x * cosAngles.y;
+}
+
+
+/**
+ * Get a rotation matrix from radian angle values in XYZ order.
+ *
+ * @arg angles: The rotation angles in radians.
+ * @arg out: The location to store the rotation matrix.
+ */
+inline void reverseRotationMatrix(const float3 &angles, float3x3 &out)
+{
+    const float3 cosAngles = cos(angles);
+    const float3 sinAngles = sin(angles);
+
+    // Why tf can I not init a float3x3 normally??
+    out[0][0] = cosAngles.y * cosAngles.z;
+    out[0][1] = -cosAngles.y * sinAngles.z;
+    out[0][2] = sinAngles.y;
+    out[1][0] = sinAngles.x * sinAngles.y * cosAngles.z + cosAngles.x * sinAngles.z;
+    out[1][1] = cosAngles.x * cosAngles.z - sinAngles.x * sinAngles.y * sinAngles.z;
+    out[1][2] = -sinAngles.x * cosAngles.y;
+    out[2][0] = sinAngles.x * sinAngles.z - cosAngles.x * sinAngles.y * cosAngles.z;
+    out[2][1] = cosAngles.x * sinAngles.y * sinAngles.z + sinAngles.x * cosAngles.z;
+    out[2][2] = cosAngles.x * cosAngles.y;
+}
+
+
+/**
+ * Get a rotation matrix from an axis and an angle about that axis.
+ *
+ * @arg angles: The rotation angles in radians.
+ * @arg out: The location to store the rotation matrix.
+ */
+inline void axisAngleRotationMatrix(const float3 &axis, const float angle, float3x3 &out)
+{
+    const float cosAngle = cos(angle);
+    const float oneMinusCosAngle = 1.0f - cosAngle;
+    const float sinAngle = sin(angle);
+
+    const float3 axisSquared = axis * axis;
+
+    const float axisXY = axis.x * axis.y * oneMinusCosAngle;
+    const float axisXZ = axis.x * axis.z * oneMinusCosAngle;
+    const float axisYZ = axis.y * axis.z * oneMinusCosAngle;
+
+    const float3 axisSinAngle = axis * sinAngle;
+
+    out[0][0] = cosAngle + axisSquared.x * oneMinusCosAngle;
+    out[0][1] = axisXY - axisSinAngle.z;
+    out[0][2] = axisXZ + axisSinAngle.y;
+    out[1][0] = axisXY + axisSinAngle.z;
+    out[1][1] = cosAngle + axisSquared.y * oneMinusCosAngle;
+    out[1][2] = axisYZ - axisSinAngle.x;
+    out[2][0] = axisXZ - axisSinAngle.y;
+    out[2][1] = axisYZ + axisSinAngle.x;
+    out[2][2] = cosAngle + axisSquared.z * oneMinusCosAngle;
+}
+
+
+/**
+ * Multiply a 4d vector by a 4x4 matrix.
+ *
+ * @arg m: The matrix that will transform the vector.
+ * @arg v: The vector to transform.
+ * @arg out: The location to store the resulting vector.
+ */
+inline void matmul(const float4x4 &m, const float4 &v, float4 &out)
+{
+    for (int i=0; i < 4; i++)
+    {
+        out[i] = 0;
+
+        for (int j=0; j < 4; j++)
+        {
+            out[i] += m[i][j] * v[j];
+        }
+    }
+}
+
+
+/**
+ * Multiply a 3d vector by a 3x3 matrix.
+ *
+ * @arg m: The matrix that will transform the vector.
+ * @arg v: The vector to transform.
+ * @arg out: The location to store the resulting vector.
+ */
+inline void matmul(const float3x3 &m, const float3 &v, float3 &out)
+{
+    out = float3(
+        m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z,
+        m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z,
+        m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z
+    );
+}
+
+
+/**
+ * Multiply a 4d vector by a 4x4 matrix.
+ *
+ * @arg m: The matrix that will transform the vector.
+ * @arg v: The vector to transform.
+ * @arg out: The location to store the resulting vector.
+ */
+inline float4 matmul(const float4x4 &m, const float4 &v)
+{
+    float4 out;
+    for (int i=0; i < 4; i++)
+    {
+        out[i] = 0;
+
+        for (int j=0; j < 4; j++)
+        {
+            out[i] += m[i][j] * v[j];
+        }
+    }
+
+    return out;
+}
+
+
+/**
+ * Multiply a 3d vector by a 3x3 matrix.
+ *
+ * @arg m: The matrix that will transform the vector.
+ * @arg v: The vector to transform.
+ * @arg out: The location to store the resulting vector.
+ */
+inline float3 matmul(const float3x3 &m, const float3 &v)
+{
+    return float3(
+        m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z,
+        m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z,
+        m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z
+    );
+}
+
+
+/**
+ * Offset a point in a direction.
+ *
+ * @arg point: The point to offset.
+ * @arg direction: The direction to offset in.
+ * @arg offset: The distance to offset the point.
+ *
+ * @returns: The offset point.
+ */
+inline float3 offsetPoint(
+        const float3 &point,
+        const float3 &direction,
+        const float offset)
+{
+    return offset * direction + point;
+}
+
+
+/**
+ * The distance from a point to the y-axis.
+ *
+ * @arg position: The position to get the distance from.
+ *
+ * @returns: The distance to the y-axis.
+ */
+inline float distanceToYAxis(const float3 &position)
+{
+    return length(float2(position.x, position.z));
+}
+
+
+/**
+ * Compute the signed distance along a vector
+ *
+ * @arg vector: A vector from a point to the nearest surface of an
+ *     object.
+ *
+ * @returns: The signed length of the vector.
+ */
+inline float sdfLength(const float2 &vector)
+{
+    return (
+        length(positivePart(vector))
+        - negativePart(maxComponent(vector))
+    );
+}
+
+
+/**
+ * Compute the signed distance along a vector
+ *
+ * @arg vector: A vector from a point to the nearest surface of an
+ *     object.
+ *
+ * @returns: The signed length of the vector.
+ */
+inline float sdfLength(const float3 &vector)
+{
+    return (
+        length(positivePart(vector))
+        - negativePart(maxComponent(vector))
+    );
+}
+
+
+/**
+ * Get the length of the shorter of two vectors.
+ *
+ * @arg vector0: The first vector to get the length of if it is the
+ *     shortest option
+ * @arg vector1: The second vector to get the length of if it is the
+ *     shortest option
+ *
+ * @returns: The shorter of the two lengths
+ */
+inline float minLength(const float2 &vector0, const float2 &vector1)
+{
+    return sqrt(min(dot2(vector0), dot2(vector1)));
+}
+
+
+/**
+ * Get the length of the shorter of two vectors.
+ *
+ * @arg vector0: The first vector to get the length of if it is the
+ *     shortest option
+ * @arg vector1: The second vector to get the length of if it is the
+ *     shortest option
+ *
+ * @returns: The shorter of the two lengths
+ */
+inline float minLength(const float3 &vector0, const float3 &vector1)
+{
+    return sqrt(min(dot2(vector0), dot2(vector1)));
+}
+
+
+/**
+ * Convert a cartesion vector to cylindrical, without worrying about
+ * the angle.
+ *
+ * @returns: Cylindrical coordinates without angle, (r, h)
+ */
+inline float2 cartesianToCylindrical(const float3 &coordinates)
+{
+    return float2(distanceToYAxis(coordinates), coordinates.y);
+}
+
+
+/**
+ * Convert a spherical unit vector (unit radius) to cartesion.
+ *
+ * @arg angles: The spherical angles in radians.
+ *
+ * @returns: The equivalent cartesion vector.
+ */
+inline float3 sphericalUnitVectorToCartesion(const float2 &angles)
+{
+    const float sinPhi = sin(angles.y);
+    return float3(
+        cos(angles.x) * sinPhi,
+        cos(angles.y),
+        sin(angles.x) * sinPhi
+    );
+}
+
+
+/**
+ * Get the equivalent theta and phi values that lie between [0, 2 * PI),
+ * and [0, PI) respectively.
+ *
+ * @arg angles: The spherical angles in radians.
+ *
+ * @returns: The equivalent theta and phi.
+ */
+inline float2 normalizeAngles(const float2 &angles)
+{
+    float2 normalizedAngles = float2(
+        fmod(angles.x, 2.0f * PI),
+        fmod(angles.y, PI)
+    );
+    normalizedAngles.x += 2 * PI * (normalizedAngles.x < 0);
+    normalizedAngles.y += PI * (normalizedAngles.y < 0);
+
+    return normalizedAngles;
+}
+
+
+/**
+ * Get the x, y, and z angles between two vectors.
+ *
+ * @arg vector0: The first vector.
+ * @arg vector1: The other vector.
+ *
+ * @returns: The Euler angles between the two vectors.
+ */
+inline float3 anglesBetweenVectors(const float3 &vector0, const float3 &vector1)
+{
+    return float3(
+        acos(dot(float2(vector0.y, vector0.z), float2(vector1.y, vector1.z))),
+        acos(dot(float2(vector0.x, vector0.z), float2(vector1.x, vector1.z))),
+        acos(dot(float2(vector0.x, vector0.y), float2(vector1.x, vector1.y)))
+    );
+}
+
+
+/**
+ * Get the angle and axis to use to rotate a vector onto another.
+ *
+ * @arg axis: The rotation angles in radians.
+ * @arg out: The location to store the axis.
+ *
+ * @returns: The angle.
+ */
+inline float getAngleAndAxisBetweenVectors(
+        const float3 &vector0,
+        const float3 &vector1,
+        float3 &axis)
+{
+    const float3 perpendicularVector = cross(vector0, vector1);
+    if (length(perpendicularVector) > 0.0f)
+    {
+        axis = normalize(perpendicularVector);
+    }
+    else if (vector1.z != 0.0f || vector1.y != 0.0f)
+    {
+        axis = normalize(cross(float3(1, 0, 0), vector1));
+    }
+    else if (vector1.x != 0.0f || vector1.z != 0.0f)
+    {
+        axis = normalize(cross(float3(0, 1, 0), vector1));
+    }
+    else if (vector1.x != 0.0f || vector1.y != 0.0f)
+    {
+        axis = normalize(cross(float3(0, 0, 1), vector1));
+    }
+    else
+    {
+        axis = vector0;
+    }
+    return acos(dot(vector0, vector1));
+}
+
+
+/**
+ * Align a vector that has been defined relative to an axis with another
+ * axis. For example if a vector has been chosen randomly in a
+ * particular hemisphere, rotate that hemisphere to align with a new
+ * axis.
+ *
+ * @arg unalignedAxis: The axis, about which, the vector was defined.
+ * @arg alignDirection: The axis to align with.
+ * @arg vectorToAlign: The vector that was defined relative to
+ *     unalignedAxis.
+ *
+ * @returns: 
+ */
+inline float3 alignWithDirection(
+        const float3 &unalignedAxis,
+        const float3 &alignDirection,
+        const float3 &vectorToAlign)
+{
+    float3 rotationAxis;
+    const float angle = getAngleAndAxisBetweenVectors(
+        unalignedAxis,
+        alignDirection,
+        rotationAxis
+    );
+
+    if (angle == 0.0f)
+    {
+        return vectorToAlign;
+    }
+
+    float3x3 rotationMatrix;
+    axisAngleRotationMatrix(rotationAxis, angle, rotationMatrix);
+
+    return matmul(rotationMatrix, vectorToAlign);
+}
+
+
+/**
+ * Convert a cartesion unit vector to spherical.
+ *
+ * @arg rayDirection: The cartesion unit vector.
+ * @arg thetaOffset: Offset the theta angle by this amount.
+ *
+ * @returns: The spherical angles in radians.
+ */
+inline float2 cartesionUnitVectorToSpherical(
+        const float3 &rayDirection,
+        const float thetaOffset)
+{
+    return normalizeAngles(float2(
+        atan2(rayDirection.z, rayDirection.x) + thetaOffset,
+        acos(rayDirection.y)
+    ));
+}
+
+
+/**
+ * Convert a cartesion unit vector to spherical.
+ *
+ * @arg rayDirection: The cartesion unit vector.
+ *
+ * @returns: The spherical angles in radians.
+ */
+inline float2 cartesionUnitVectorToSpherical(const float3 &rayDirection)
+{
+    return normalizeAngles(float2(
+        atan2(rayDirection.z, rayDirection.x),
+        acos(rayDirection.y)
+    ));
+}
+
+
+/**
+ * Spherical unit vector dot product.
+ *
+ * @arg vector0: The first unit vector.
+ * @arg vector1: The second unit vector.
+ *
+ * @returns: The spherical dot product.
+ */
+inline float sphericalUnitDot(const float2 &vector0, const float2 &vector1)
+{
+    return (
+        cos(vector0.x) * cos(vector1.x)
+        + cos(vector0.y - vector1.y) * sin(vector0.x) * sin(vector1.x)
+    );
+}
+
+
+/**
+ * Convert the uv position in a latlong image to angles.
+ *
+ * @arg uvPosition: The UV position.
+ *
+ * @returns: The equivalent angles in radians.
+ */
+inline float2 uvPositionToAngles(const float2 &uvPosition)
+{
+    return float2(
+        (uvPosition.x + 1.0f) * PI,
+        (1.0f - uvPosition.y) * PI / 2.0f
+    );
+}
+
+
+/**
+ * Convert location of a pixel in an image into UV.
+ *
+ * @arg pixelLocation: The x, and y positions of the pixel.
+ * @arg format: The image width, and height.
+ *
+ * @returns: The UV position.
+ */
+inline float2 pixelsToUV(const float2 &pixelLocation, const float2 &format)
+{
+    return float2(
+        2.0f * pixelLocation.x / format.x - 1.0f,
+        2.0f * pixelLocation.y / format.y - 1.0f
+    );
+}
+
+
+/**
+ * Blend linearly between two values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg weight: The blend weight, 1 will return value0, and 0 will
+ *     return value1.
+ *
+ * @returns: The blended value.
+ */
+inline float blend(const float value0, const float value1, const float weight)
+{
+    return value1 + weight * (value0 - value1);
+}
+
+
+/**
+ * Blend linearly between two values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg weight: The blend weight, 1 will return value0, and 0 will
+ *     return value1.
+ *
+ * @returns: The blended value.
+ */
+inline float3 blend(const float3 &value0, const float3 &value1, const float weight)
+{
+    return value1 + weight * (value0 - value1);
+}
+
+
+/**
+ * Blend linearly between two values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg weight: The blend weight, 1 will return value0, and 0 will
+ *     return value1.
+ *
+ * @returns: The blended value.
+ */
+inline float4 blend(const float4 &value0, const float4 &value1, const float weight)
+{
+    return value1 + weight * (value0 - value1);
+}
+
+
+/**
+ * Blend linearly between two values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg weight: The blend weight, 1 will return value0, and 0 will
+ *     return value1.
+ *
+ * @returns: The blended value.
+ */
+inline float mix(const float value0, const float value1, const float weight)
+{
+    return (1.0f - weight) * value0 + weight * value1;
+}
+
+
+/**
+ * Blend linearly between two values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg weight: The blend weight, 1 will return value0, and 0 will
+ *     return value1.
+ *
+ * @returns: The blended value.
+ */
+inline float3 mix(const float3 &value0, const float3 &value1, const float weight)
+{
+    return (1.0f - weight) * value0 + weight * value1;
+}
+
+
+/**
+ * Blend linearly between two values.
+ *
+ * @arg value0: The first value.
+ * @arg value1: The second value.
+ * @arg weight: The blend weight, 1 will return value0, and 0 will
+ *     return value1.
+ *
+ * @returns: The blended value.
+ */
+inline float4 mix(const float4 &value0, const float4 &value1, const float weight)
+{
+    return (1.0f - weight) * value0 + weight * value1;
+}
+
+
+
+/**
+ * Get the position component of a world matrix.
+ *
+ * @arg worldMatrix: The world matrix.
+ * @arg position: The location to store the position.
+ */
+inline void positionFromWorldMatrix(const float4x4 &worldMatrix, float3 &position)
+{
+    position = float3(
+        worldMatrix[0][3],
+        worldMatrix[1][3],
+        worldMatrix[2][3]
+    );
+}
+
+
+/**
+ * Get the rotation component of a world matrix.
+ *
+ * @arg worldMatrix: The world matrix.
+ * @arg rotation: The location to store the rotation.
+ */
+inline void rotationFromWorldMatrix(const float4x4 &worldMatrix, float3x3 &rotationMatrix)
+{
+    rotationMatrix[0][0] = worldMatrix[0][0];
+    rotationMatrix[0][1] = worldMatrix[0][1];
+    rotationMatrix[0][2] = worldMatrix[0][2];
+    rotationMatrix[1][0] = worldMatrix[1][0];
+    rotationMatrix[1][1] = worldMatrix[1][1];
+    rotationMatrix[1][2] = worldMatrix[1][2];
+    rotationMatrix[2][0] = worldMatrix[2][0];
+    rotationMatrix[2][1] = worldMatrix[2][1];
+    rotationMatrix[2][2] = worldMatrix[2][2];
+}
+
+
+/**
+ * Compute the number of samples we should use between a min and max.
+ *
+ * @arg minSamples: The minimum samples.
+ * @arg maxSamples: The maximum samples.
+ * @arg variance: The variance that weights the number of samples.
+ *
+ * @returns: The number of samples to take.
+ */
+inline float adaptiveSamples(
+        const float minSamples,
+        const float maxSamples,
+        const float3 &variance)
+{
+    return clamp(
+        round(maxSamples * length(variance)),
+        minSamples,
+        maxSamples
+    );
+}
+
+
+/**
+ * Combine two PDFs in an optimal manner.
+ *
+ * @arg pdf0: The first PDF.
+ * @arg pdf1: The second PDF.
+ *
+ * @returns: The combined PDF.
+ */
+inline float balanceHeuristic(const float pdf0, const float pdf1)
+{
+    return pdf0 / (pdf0 + pdf1);
+}
+
+
+//
+// Randomization functions
+//
+
+
+// Some random constants on the interval [1, 2]
+#define RAND_CONST_0 1.571411510193971f
+#define RAND_CONST_1 1.268632820084931f
+#define RAND_CONST_2 1.7880365647937733f
+#define RAND_CONST_3 1.3546987471558234f
+#define RAND_CONST_4 1.4365958250848703f
+#define RAND_CONST_5 1.7045380669435368f
+#define RAND_CONST_6 1.2006950006793073f
+#define RAND_CONST_7 1.3877943854025474f
+#define RAND_CONST_8 1.2513180038618783f
+#define RAND_CONST_9 1.8584270278009565f
+#define RAND_CONST_10 1.1299747498069974f
+#define RAND_CONST_11 1.394137930742262f
+#define RAND_CONST_12 1.7779101864424334f
+#define RAND_CONST_13 1.8037481882044445f
+
+
+/**
+ * Compute a Wang hash.
+ *
+ * @arg seed: The seed to hash.
+ *
+ * @returns: The hashed value.
+ */
+inline uint wangHash(uint seed)
+{
+    seed = uint(seed ^ uint(61)) ^ uint(seed >> uint(16));
+    seed *= uint(9);
+    seed = seed ^ (seed >> 4);
+    seed *= uint(0x27d4eb2d);
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+
+
+/**
+ * Compute a Wang hash.
+ *
+ * @arg seed: The seed to hash.
+ *
+ * @returns: The hashed value.
+ */
+inline int wangHash(int seed)
+{
+    seed = int(seed ^ 61) ^ int(seed >> 16);
+    seed *= 9;
+    seed = seed ^ (seed >> 4);
+    seed *= int(0x27d4eb2d);
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+inline float random(const float seed)
+{
+    return fract(sin(seed * 91.3458f) * 47453.5453f);
+}
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+inline float random(uint seed)
+{
+    return float(wangHash(seed)) / 4294967296.0f;
+}
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+inline float2 random(const float2 &seed)
+{
+    return float2(
+        random(seed.x),
+        random(seed.y)
+    );
+}
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+inline float3 random(const float3 &seed)
+{
+    return float3(
+        random(seed.x),
+        random(seed.y),
+        random(seed.z)
+    );
+}
+
+
+/**
+ * Get a random value on the interval [0, 1].
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random value on the interval [0, 1].
+ */
+inline float4 random(const float4 &seed)
+{
+    return float4(
+        random(seed.x),
+        random(seed.y),
+        random(seed.z),
+        random(seed.w)
+    );
+}
+
+
+/**
+ * Create a random unit vector.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+float3 randomUnitVector(const float3 &seed)
+{
+    const float z = random(seed.x) * 2.0f - 1.0f;
+    const float a = random(seed.y) * 2.0f * PI;
+    const float r = sqrt(1.0f - z * z);
+    const float x = r * cos(a);
+    const float y = r * sin(a);
+    return normalize(float3(x, y, z));
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * z-axis.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+float3 uniformDirectionInZHemisphere(const float3 &seed)
+{
+    const float uniform = random(seed.x);
+    const float r = sqrt(1.0f - uniform * uniform);
+    const float phi = 2 * PI * random(seed.y);
+ 
+    return float3(cos(phi) * r, sin(phi) * r, uniform);
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * given axis.
+ *
+ * @arg axis: The axis to align the hemisphere with.
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+float3 uniformDirectionInHemisphere(const float3 &axis, const float3 &seed)
+{
+    return normalize(alignWithDirection(
+        float3(0, 0, 1),
+        axis,
+        uniformDirectionInZHemisphere(seed)
+    ));
+}
+
+
+/**
+ * Create a random point that lies within the unit circle.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random point, (radius, angle) in the unit circle.
+ */
+inline float2 uniformPointInUnitCircle(const float3 &seed)
+{
+    return float2(sqrt(random(seed.x)), 2.0f * PI * random(seed.y));
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * z-axis, with a distribution that is cosine weighted.
+ *
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+float3 cosineDirectionInZHemisphere(const float3 &seed)
+{
+    const float uniform = random(seed.x);
+    const float r = sqrt(uniform);
+    const float angle = 2 * PI * random(seed.y);
+ 
+    const float x = r * cos(angle);
+    const float y = r * sin(angle);
+ 
+    return float3(x, y, sqrt(positivePart(1 - uniform)));
+}
+
+
+/**
+ * Create a random unit vector in the hemisphere aligned along the
+ * given axis, with a distribution that is cosine weighted.
+ *
+ * @arg axis: The axis to align the hemisphere with.
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+float3 cosineDirectionInHemisphere(const float3 &axis, const float3 &seed)
+{
+    return normalize(alignWithDirection(
+        float3(0, 0, 1),
+        axis,
+        cosineDirectionInZHemisphere(seed)
+    ));
+}
+
+
+/**
+ * Get a random direction within a solid angle oriented along the
+ * z-axis.
+ *
+ * https://math.stackexchange.com/questions/56784/generate-a-random-direction-within-a-cone
+ *
+ * @arg angle: The angle from the axis to the conical surface.
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+inline float3 uniformDirectionInZSolidAngle(const float angle, const float3 &seed)
+{
+    const float cosAngle = cos(angle);
+    const float z = random(seed.x) * (1.0f - cosAngle) + cosAngle;
+    const float phi = random(seed.y) * 2.0f * PI;
+
+    const float rootOneMinusZSquared = sqrt(1.0f - z * z);
+
+    return normalize(float3(
+        rootOneMinusZSquared * cos(phi),
+        rootOneMinusZSquared * sin(phi),
+        z
+    ));
+}
+
+
+/**
+ * Get a random direction within a solid angle.
+ *
+ * @arg axis: The direction the solid angle is aligned with.
+ * @arg angle: The angle from the axis to the conical surface.
+ * @arg seed: The random seed.
+ *
+ * @returns: A random unit vector.
+ */
+float3 uniformDirectionInSolidAngle(
+        const float3 &axis,
+        const float angle,
+        const float3 &seed)
+{
+    return normalize(alignWithDirection(
+        float3(0, 0, 1),
+        axis,
+        uniformDirectionInZSolidAngle(angle, seed)
+    ));
+}
+
+
+// The MIT License (MIT)
+
+// Copyright (c) 2012-2018 Sebastien Rombauts (sebastien.rombauts@gmail.com)
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is furnished
+// to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+// WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+// IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+//
+// Noise functions adapted from: https://github.com/SRombauts
+//
+
+#define NOISE_ENABLED 1
+#define FBM_NOISE 2
+#define INVERT_NOISE 512
+#define SCATTERING_NOISE 1024
+#define EXTINCTION_NOISE 2048
+
+// Skewing/Unskewing factors for 2D
+#define F2 0.366025403f // F2 = (sqrt(3) - 1) / 2
+#define G2 0.211324865f // G2 = (3 - sqrt(3)) / 6   = F2 / (1 + 2 * K)
+
+// Skewing/Unskewing factors for 3D
+#define F3 1.0f / 3.0f
+#define G3 1.0f / 6.0f
+
+
+/**
+ * Helper function to compute gradients-dot-residual vectors (1D)
+ *
+ * @note that these generate gradients of more than unit length. To make
+ * a close match with the value range of classic Perlin noise, the final
+ * noise values need to be rescaled to fit nicely within [-1,1].
+ * (The simplex noise functions as such also have different scaling.)
+ * Note also that these noise functions are the most practical and useful
+ * signed version of Perlin noise.
+ *
+ * @arg hash: Hash value.
+ * @arg x: Distance to the corner.
+ *
+ * @returns: Gradient value.
+ */
+float grad(const int hash, const float x)
+{
+    const int h = hash & 0x0F;  // Convert low 4 bits of hash code
+    float grad = 1.0f + (h & 7);    // Gradient value 1.0, 2.0, ..., 8.0
+    if ((h & 8) != 0) grad = -grad; // Set a random sign for the gradient
+    return (grad * x);              // Multiply the gradient with the distance
+}
+
+
+/**
+ * Helper functions to compute gradients-dot-residual vectors (2D)
+ *
+ * @arg hash: Hash value.
+ * @arg x: x coordinate of the distance to the corner.
+ * @arg y: y coordinate of the distance to the corner.
+ *
+ * @returns: Gradient value.
+ */
+float grad(const int hash, const float x, const float y)
+{
+    const int h = hash & 0x3F;  // Convert low 3 bits of hash code
+    const float u = h < 4 ? x : y;  // into 8 simple gradient directions,
+    const float v = h < 4 ? y : x;
+    // and compute the dot product with (x,y).
+    return ((h & 1) ? -u : u) + ((h & 2) ? -2.0f * v : 2.0f * v);
+}
+
+
+/**
+ * Helper functions to compute gradients-dot-residual vectors (3D)
+ *
+ * @arg hash: Hash value.
+ * @arg x: x coordinate of the distance to the corner.
+ * @arg y: y coordinate of the distance to the corner.
+ * @arg z: z coordinate of the distance to the corner.
+ *
+ * @returns: Gradient value
+ */
+float grad(const int hash, const float x, const float y, const float z)
+{
+    const int h = hash & 15;     // Convert low 4 bits of hash code into 12 simple
+    const float u = h < 8 ? x : y; // gradient directions, and compute dot product.
+    const float v = h < 4 ? y : h == 12 || h == 14 ? x : z; // Fix repeats at h = 12 to 15
+    return ((h & 1) ? -u : u) + ((h & 2) ? -v : v);
+}
+
+
+/**
+ * 1D Perlin simplex noise
+ * Takes around 74ns on an AMD APU.
+ *
+ * @arg seed: The seed for the noise.
+ *
+ * @returns: Noise value in the range [-1, 1], value of 0 on all integer
+ *     coordinates.
+ */
+float perlinSimplexNoise(const float seed)
+{
+    float n0, n1; // Noise contributions from the two "corners"
+
+    // Corners coordinates (nearest integer values):
+    const int i0 = floor(seed);
+    const int i1 = i0 + 1;
+    // Distances to corners (between 0 and 1):
+    const float x0 = seed - i0;
+    const float x1 = x0 - 1.0f;
+
+    // Calculate the contribution from the first corner
+    float t0 = 1.0f - x0 * x0;
+    t0 *= t0;
+    n0 = t0 * t0 * grad(wangHash(i0), x0);
+
+    // Calculate the contribution from the second corner
+    float t1 = 1.0f - x1 * x1;
+    t1 *= t1;
+    n1 = t1 * t1 * grad(wangHash(i1), x1);
+
+    // The maximum value of this noise is 8*(3/4)^4 = 2.53125
+    // A factor of 0.395 scales to fit exactly within [-1,1]
+    return 0.395f * (n0 + n1);
+}
+
+
+/**
+ * 2D Perlin simplex noise
+ * Takes around 150ns on an AMD APU.
+ *
+ * @arg seed: The seed for the noise.
+ *
+ * @returns: Noise value in the range [-1, 1], value of 0 on all integer
+ *     coordinates.
+ */
+float perlinSimplexNoise(const float2 &seed)
+{
+    float n0, n1, n2;   // Noise contributions from the three corners
+
+    // Skew the input space to determine which simplex cell we're in
+    const float s = sumComponent(seed) * F2;  // Hairy factor for 2D
+    const float xs = seed.x + s;
+    const float ys = seed.y + s;
+    const int i = floor(xs);
+    const int j = floor(ys);
+
+    // Unskew the cell origin back to (x,y) space
+    const float t = float(i + j) * G2;
+    const float X0 = i - t;
+    const float Y0 = j - t;
+    const float x0 = seed.x - X0;  // The x,y distances from the cell origin
+    const float y0 = seed.y - Y0;
+
+    // For the 2D case, the simplex shape is an equilateral triangle.
+    // Determine which simplex we are in.
+    int i1, j1;  // Offsets for second (middle) corner of simplex in (i,j) coords
+    if (x0 > y0)
+    {   
+        // lower triangle, XY order: (0,0)->(1,0)->(1,1)
+        i1 = 1;
+        j1 = 0;
+    }
+    else
+    {   
+        // upper triangle, YX order: (0,0)->(0,1)->(1,1)
+        i1 = 0;
+        j1 = 1;
+    }
+
+    // A step of (1,0) in (i,j) means a step of (1-c,-c) in (x,y), and
+    // a step of (0,1) in (i,j) means a step of (-c,1-c) in (x,y), where
+    // c = (3-sqrt(3))/6
+
+    // Offsets for middle corner in (x,y) unskewed coords
+    const float x1 = x0 - i1 + G2;
+    const float y1 = y0 - j1 + G2;
+    // Offsets for last corner in (x,y) unskewed coords
+    const float x2 = x0 - 1.0f + 2.0f * G2;
+    const float y2 = y0 - 1.0f + 2.0f * G2;
+
+    // Work out the hashed gradient indices of the three simplex corners
+    const int gi0 = wangHash(i + wangHash(j));
+    const int gi1 = wangHash(i + i1 + wangHash(j + j1));
+    const int gi2 = wangHash(i + 1 + wangHash(j + 1));
+
+    // Calculate the contribution from the first corner
+    float t0 = 0.5f - x0 * x0 - y0 * y0;
+    if (t0 < 0.0f)
+    {
+        n0 = 0.0f;
+    }
+    else
+    {
+        t0 *= t0;
+        n0 = t0 * t0 * grad(gi0, x0, y0);
+    }
+
+    // Calculate the contribution from the second corner
+    float t1 = 0.5f - x1 * x1 - y1 * y1;
+    if (t1 < 0.0f)
+    {
+        n1 = 0.0f;
+    }
+    else
+    {
+        t1 *= t1;
+        n1 = t1 * t1 * grad(gi1, x1, y1);
+    }
+
+    // Calculate the contribution from the third corner
+    float t2 = 0.5f - x2 * x2 - y2 * y2;
+    if (t2 < 0.0f)
+    {
+        n2 = 0.0f;
+    }
+    else
+    {
+        t2 *= t2;
+        n2 = t2 * t2 * grad(gi2, x2, y2);
+    }
+
+    // Add contributions from each corner to get the final noise value.
+    // The result is scaled to return values in the interval [-1,1].
+    return 45.23065f * (n0 + n1 + n2);
+}
+
+
+/**
+ * 3D Perlin simplex noise
+ *
+ * @arg seed: The seed for the noise.
+ *
+ * @returns: Noise value in the range [-1, 1], value of 0 on all integer
+ *     coordinates.
+ */
+float perlinSimplexNoise(const float3 &seed)
+{
+    float n0, n1, n2, n3; // Noise contributions from the four corners
+
+    // Skew the input space to determine which simplex cell we're in
+    const float s = sumComponent(seed) * F3; // Very nice and simple skew factor for 3D
+    const int i = floor(seed.x + s);
+    const int j = floor(seed.y + s);
+    const int k = floor(seed.z + s);
+    const float t = (i + j + k) * G3;
+    const float X0 = i - t; // Unskew the cell origin back to (x,y,z) space
+    const float Y0 = j - t;
+    const float Z0 = k - t;
+    const float x0 = seed.x - X0; // The x,y,z distances from the cell origin
+    const float y0 = seed.y - Y0;
+    const float z0 = seed.z - Z0;
+
+    // For the 3D case, the simplex shape is a slightly irregular tetrahedron.
+    // Determine which simplex we are in.
+    int i1, j1, k1; // Offsets for second corner of simplex in (i,j,k) coords
+    int i2, j2, k2; // Offsets for third corner of simplex in (i,j,k) coords
+    if (x0 >= y0)
+    {
+        if (y0 >= z0)
+        {
+            i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 1; k2 = 0; // X Y Z order
+        }
+        else if (x0 >= z0)
+        {
+            i1 = 1; j1 = 0; k1 = 0; i2 = 1; j2 = 0; k2 = 1; // X Z Y order
+        }
+        else
+        {
+            i1 = 0; j1 = 0; k1 = 1; i2 = 1; j2 = 0; k2 = 1; // Z X Y order
+        }
+    }
+    else
+    { // x0<y0
+        if (y0 < z0)
+        {
+            i1 = 0; j1 = 0; k1 = 1; i2 = 0; j2 = 1; k2 = 1; // Z Y X order
+        }
+        else if (x0 < z0)
+        {
+            i1 = 0; j1 = 1; k1 = 0; i2 = 0; j2 = 1; k2 = 1; // Y Z X order
+        }
+        else
+        {
+            i1 = 0; j1 = 1; k1 = 0; i2 = 1; j2 = 1; k2 = 0; // Y X Z order
+        }
+    }
+
+    // A step of (1,0,0) in (i,j,k) means a step of (1-c,-c,-c) in (x,y,z),
+    // a step of (0,1,0) in (i,j,k) means a step of (-c,1-c,-c) in (x,y,z), and
+    // a step of (0,0,1) in (i,j,k) means a step of (-c,-c,1-c) in (x,y,z), where
+    // c = 1/6.
+    const float x1 = x0 - i1 + G3; // Offsets for second corner in (x,y,z) coords
+    const float y1 = y0 - j1 + G3;
+    const float z1 = z0 - k1 + G3;
+    const float x2 = x0 - i2 + 2.0f * G3; // Offsets for third corner in (x,y,z) coords
+    const float y2 = y0 - j2 + 2.0f * G3;
+    const float z2 = z0 - k2 + 2.0f * G3;
+    const float x3 = x0 - 1.0f + 3.0f * G3; // Offsets for last corner in (x,y,z) coords
+    const float y3 = y0 - 1.0f + 3.0f * G3;
+    const float z3 = z0 - 1.0f + 3.0f * G3;
+
+    // Work out the hashed gradient indices of the four simplex corners
+    const int gi0 = wangHash(i + wangHash(j + wangHash(k)));
+    const int gi1 = wangHash(i + i1 + wangHash(j + j1 + wangHash(k + k1)));
+    const int gi2 = wangHash(i + i2 + wangHash(j + j2 + wangHash(k + k2)));
+    const int gi3 = wangHash(i + 1 + wangHash(j + 1 + wangHash(k + 1)));
+
+    // Calculate the contribution from the four corners
+    float t0 = 0.6f - x0 * x0 - y0 * y0 - z0 * z0;
+    if (t0 < 0)
+    {
+        n0 = 0.0;
+    }
+    else
+    {
+        t0 *= t0;
+        n0 = t0 * t0 * grad(gi0, x0, y0, z0);
+    }
+    float t1 = 0.6f - x1 * x1 - y1 * y1 - z1 * z1;
+    if (t1 < 0)
+    {
+        n1 = 0.0;
+    }
+    else
+    {
+        t1 *= t1;
+        n1 = t1 * t1 * grad(gi1, x1, y1, z1);
+    }
+    float t2 = 0.6f - x2 * x2 - y2 * y2 - z2 * z2;
+    if (t2 < 0)
+    {
+        n2 = 0.0;
+    }
+    else
+    {
+        t2 *= t2;
+        n2 = t2 * t2 * grad(gi2, x2, y2, z2);
+    }
+    float t3 = 0.6f - x3 * x3 - y3 * y3 - z3 * z3;
+    if (t3 < 0)
+    {
+        n3 = 0.0;
+    }
+    else
+    {
+        t3 *= t3;
+        n3 = t3 * t3 * grad(gi3, x3, y3, z3);
+    }
+    // Add contributions from each corner to get the final noise value.
+    // The result is scaled to stay just inside [-1,1]
+    return 32.0f * (n0 + n1 + n2 + n3);
+}
+
+
+/**
+ * 4D Perlin simplex noise
+ *
+ * @arg seed: The seed for the noise.
+ * @arg simplex: The simplex LUT.
+ * @arg perm: The perm LUT.
+ * @arg grad4: The grad4 LUT.
+ *
+ * @returns: Noise value in the range [-1, 1], value of 0 on all integer
+ *     coordinates.
+ */
+inline float perlinSimplexNoise(
+        const float4 &seed,
+        const int simplex[64][4],
+        const int perm[512],
+        const int grad4[32][4])
+{
+    const float F4 = (sqrt(5.0f) - 1.0f) / 4.0f;
+    const float G4 = (5.0f - sqrt(5.0f)) / 20.0f;
+
+    const float x = seed.x;
+    const float y = seed.y;
+    const float z = seed.z;
+    const float w = seed.w;
+
+    const float s = (x + y + z + w) * F4;
+    const int i = floor(x + s);
+    const int j = floor(y + s);
+    const int k = floor(z + s);
+    const int l = floor(w + s);
+    const float t = (i + j + k + l) * G4;
+    const float X0 = i - t;
+    const float Y0 = j - t;
+    const float Z0 = k - t;
+    const float W0 = l - t;
+
+    const float x0 = x - X0;
+    const float y0 = y - Y0;
+    const float z0 = z - Z0;
+    const float w0 = w - W0;
+    const int c1 = (x0 > y0) ? 32 : 0;
+    const int c2 = (x0 > z0) ? 16 : 0;
+    const int c3 = (y0 > z0) ? 8 : 0;
+    const int c4 = (x0 > w0) ? 4 : 0;
+    const int c5 = (y0 > w0) ? 2 : 0;
+    const int c6 = (z0 > w0) ? 1 : 0;
+    const int c = c1 + c2 + c3 + c4 + c5 + c6;
+
+    const int i1 = simplex[c][0]>=3 ? 1 : 0;
+    const int j1 = simplex[c][1]>=3 ? 1 : 0;
+    const int k1 = simplex[c][2]>=3 ? 1 : 0;
+    const int l1 = simplex[c][3]>=3 ? 1 : 0;
+    const int i2 = simplex[c][0]>=2 ? 1 : 0;
+    const int j2 = simplex[c][1]>=2 ? 1 : 0;
+    const int k2 = simplex[c][2]>=2 ? 1 : 0;
+    const int l2 = simplex[c][3]>=2 ? 1 : 0;
+    const int i3 = simplex[c][0]>=1 ? 1 : 0;
+    const int j3 = simplex[c][1]>=1 ? 1 : 0;
+    const int k3 = simplex[c][2]>=1 ? 1 : 0;
+    const int l3 = simplex[c][3]>=1 ? 1 : 0;
+
+    const float x1 = x0 - i1 + G4;
+    const float y1 = y0 - j1 + G4;
+    const float z1 = z0 - k1 + G4;
+    const float w1 = w0 - l1 + G4;
+    const float x2 = x0 - i2 + 2.0 * G4;
+    const float y2 = y0 - j2 + 2.0 * G4;
+    const float z2 = z0 - k2 + 2.0 * G4;
+    const float w2 = w0 - l2 + 2.0 * G4;
+    const float x3 = x0 - i3 + 3.0 * G4;
+    const float y3 = y0 - j3 + 3.0 * G4;
+    const float z3 = z0 - k3 + 3.0 * G4;
+    const float w3 = w0 - l3 + 3.0 * G4;
+    const float x4 = x0 - 1.0 + 4.0 * G4;
+    const float y4 = y0 - 1.0 + 4.0 * G4;
+    const float z4 = z0 - 1.0 + 4.0 * G4;
+    const float w4 = w0 - 1.0 + 4.0 * G4;
+
+    const int ii = i & 255;
+    const int jj = j & 255;
+    const int kk = k & 255;
+    const int ll = l & 255;
+
+    const int gi0 = perm[ii + perm[jj + perm[kk + perm[ll]]]] % 32;
+    const int gi1 = perm[ii + i1 + perm[jj + j1 + perm[kk + k1 + perm[ll + l1]]]] % 32;
+    const int gi2 = perm[ii + i2 + perm[jj +j2 + perm[kk + k2 + perm[ll + l2]]]] % 32;
+    const int gi3 = perm[ii + i3 + perm[jj +j3 + perm[kk + k3 + perm[ll + l3]]]] % 32;
+    const int gi4 = perm[ii + 1 + perm[jj +1 + perm[kk + 1 + perm[ll + 1]]]] % 32;
+
+    float n0, n1, n2, n3, n4;
+    float t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0 - w0 * w0;
+    if (t0 < 0)
+    {
+        n0 = 0.0;
+    }
+    else
+    {
+        t0 *= t0;
+        n0 = t0 * t0 * dot(
+            float4(grad4[gi0][0], grad4[gi0][2], grad4[gi0][3], grad4[gi0][3]),
+            float4(x0, y0, z0, w0)
+        );
+    }
+
+    float t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1 - w1 * w1;
+    if (t1 < 0)
+    {
+        n1 = 0.0;
+    }
+    else
+    {
+        t1 *= t1;
+        n1 = t1 * t1 * dot(
+            float4(grad4[gi1][0], grad4[gi1][2], grad4[gi1][3], grad4[gi1][3]),
+            float4(x1, y1, z1, w1)
+        );
+    }
+
+    float t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2 - w2 * w2;
+    if (t2 < 0)
+    {
+        n2 = 0.0;
+    }
+    else
+    {
+        t2 *= t2;
+        n2 = t2 * t2 * dot(
+            float4(grad4[gi2][0], grad4[gi2][2], grad4[gi2][3], grad4[gi2][3]),
+            float4(x2, y2, z2, w2)
+        );
+    }
+
+    float t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3 - w3 * w3;
+    if (t3 < 0)
+    {
+        n3 = 0.0;
+    }
+    else
+    {
+        t3 *= t3;
+        n3 = t3 * t3 * dot(
+            float4(grad4[gi3][0], grad4[gi3][2], grad4[gi3][3], grad4[gi3][3]),
+            float4(x3, y3, z3, w3)
+        );
+    }
+
+    float t4 = 0.6 - x4 * x4 - y4 * y4 - z4 * z4 - w4 * w4;
+    if (t4 < 0)
+    {
+        n4 = 0.0;
+    }
+    else {
+        t4 *= t4;
+        n4 = t4 * t4 * dot(
+            float4(grad4[gi4][0], grad4[gi4][2], grad4[gi4][3], grad4[gi4][3]),
+            float4(x4, y4, z4, w4)
+        );
+    }
+
+    return 27.0 * (n0 + n1 + n2 + n3 + n4);
+}
+
+
+// Copyright 2022 by Owen Bulka.
+// All rights reserved.
+// This file is released under the "MIT License Agreement".
+// Please see the LICENSE.md file that should have been included as part
+// of this package.
+
+//
+// Use the perlin simplex noise
+//
+
+
+/**
+ * fBM noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ *
+ * @returns: The noise value in the range [-1, 1].
+ */
+float fractalBrownianMotionNoise(
+        const int octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float position)
+{
+    float output = 0.0f;
+    float denom = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = gain;
+
+    for (int octave = 0; octave < octaves; octave++)
+    {
+        output += amplitude * perlinSimplexNoise(position * frequency / size);
+        denom += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * fBM noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ *
+ * @returns: The noise value in the range [-1, 1].
+ */
+float fractalBrownianMotionNoise(
+        const int octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float2 &position)
+{
+    float output = 0.0f;
+    float denom = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = gain;
+
+    for (int octave = 0; octave < octaves; octave++)
+    {
+        output += amplitude * perlinSimplexNoise(position * frequency / size);
+        denom += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * fBM noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ *
+ * @returns: The noise value in the range [-1, 1].
+ */
+float fractalBrownianMotionNoise(
+        const int octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float3 &position)
+{
+    float output = 0.0f;
+    float denom = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = gain;
+
+    for (int octave = 0; octave < octaves; octave++)
+    {
+        output += amplitude * perlinSimplexNoise(position * frequency / size);
+        denom += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * fBM noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ * @arg lowFrequencyScale: The amount to scale the lower frequencies by.
+ * @arg highFrequencyScale: The amount to scale the higher frequencies by.
+ * @arg lowFrequencyTranslation: The translation of the lower frequencies.
+ * @arg highFrequencyTranslation: The translation of the higher frequencies.
+ * @arg simplex: The simplex LUT.
+ * @arg perm: The perm LUT.
+ * @arg grad4: The grad4 LUT.
+ *
+ * @returns: The noise value in the range [-1, 1].
+ */
+float fractalBrownianMotionNoise(
+        const float octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float4 &position,
+        const float4 &lowFrequencyScale,
+        const float4 &highFrequencyScale,
+        const float4 &lowFrequencyTranslation,
+        const float4 &highFrequencyTranslation,
+        const int simplex[64][4],
+        const int perm[512],
+        const int grad4[32][4])
+{
+    float output = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = 1.0f;
+    float denom = 0.0f;
+    float4 translation;
+    float4 scale;
+
+    for (int octave=0; octave < octaves; octave++)
+    {
+        const float octaveFraction = octave / octaves;
+        scale = (
+            (highFrequencyScale * octaveFraction)
+            + (lowFrequencyScale * (1 - octaveFraction))
+        );       
+        translation = (
+            (highFrequencyTranslation * octaveFraction)
+            + (lowFrequencyTranslation * (1 - octaveFraction))
+        );
+
+        output += amplitude * perlinSimplexNoise(
+            (position * scale + translation) * frequency / size,
+            simplex,
+            perm,
+            grad4
+        );
+
+        frequency *= lacunarity;
+        denom += amplitude;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * Turbulence noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ *
+ * @returns: The noise value in the range [0, 1].
+ */
+float turbulenceNoise(
+        const int octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float position)
+{
+    float output = 0.0f;
+    float denom = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = gain;
+
+    for (int octave = 0; octave < octaves; octave++)
+    {
+        output += fabs(amplitude * perlinSimplexNoise(position * frequency / size));
+        denom += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * Turbulence noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ *
+ * @returns: The noise value in the range [0, 1].
+ */
+float turbulenceNoise(
+        const int octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float2 &position)
+{
+    float output = 0.0f;
+    float denom = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = gain;
+
+    for (int octave = 0; octave < octaves; octave++)
+    {
+        output += fabs(amplitude * perlinSimplexNoise(position * frequency / size));
+        denom += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * Turbulence noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ *
+ * @returns: The noise value in the range [0, 1].
+ */
+float turbulenceNoise(
+        const int octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float3 &position)
+{
+    float output = 0.0f;
+    float denom = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = gain;
+
+    for (int octave = 0; octave < octaves; octave++)
+    {
+        output += fabs(amplitude * perlinSimplexNoise(position * frequency / size));
+        denom += amplitude;
+
+        frequency *= lacunarity;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+/**
+ * Turbulence noise.
+ *
+ * @arg octaves: The number of different frequencies to use.
+ * @arg lacunarity: The per octave frequency multiplier.
+ * @arg size: The size of the noise.
+ * @arg gain: The per octave amplitude multiplier.
+ * @arg gamma: The result will be raised to 1 over this power.
+ * @arg position: The position to seed the noise.
+ * @arg lowFrequencyScale: The amount to scale the lower frequencies by.
+ * @arg highFrequencyScale: The amount to scale the higher frequencies by.
+ * @arg lowFrequencyTranslation: The translation of the lower frequencies.
+ * @arg highFrequencyTranslation: The translation of the higher frequencies.
+ * @arg simplex: The simplex LUT.
+ * @arg perm: The perm LUT.
+ * @arg grad4: The grad4 LUT.
+ *
+ * @returns: The noise value in the range [0, 1].
+ */
+float turbulenceNoise(
+        const float octaves,
+        const float lacunarity,
+        const float size,
+        const float gain,
+        const float gamma,
+        const float4 &position,
+        const float4 &lowFrequencyScale,
+        const float4 &highFrequencyScale,
+        const float4 &lowFrequencyTranslation,
+        const float4 &highFrequencyTranslation,
+        const int simplex[64][4],
+        const int perm[512],
+        const int grad4[32][4])
+{
+    float output = 0.0f;
+    float frequency = lacunarity;
+    float amplitude = 1.0f;
+    float denom = 0.0f;
+    float4 translation;
+    float4 scale;
+
+    for (int octave=0; octave < octaves; octave++)
+    {
+        const float octaveFraction = octave / octaves;
+        scale = (
+            (highFrequencyScale * octaveFraction)
+            + (lowFrequencyScale * (1 - octaveFraction))
+        );       
+        translation = (
+            (highFrequencyTranslation * octaveFraction)
+            + (lowFrequencyTranslation * (1 - octaveFraction))
+        );
+
+        output += fabs(
+            amplitude * perlinSimplexNoise(
+                (position * scale + translation) * frequency / size,
+                simplex,
+                perm,
+                grad4
+            )
+        );
+
+        frequency *= lacunarity;
+        denom += amplitude;
+        amplitude *= gain;
+    }
+
+    if (denom == 0.0f || gamma == 0.0f)
+    {
+        return 1.0f;
+    }
+    return pow(output / denom, 1.0f / gamma);
+}
+
+
+//
+// Handle Various Lights
+//
+
+#define AMBIENT_LIGHT 0
+#define AMBIENT_OCCLUSION 1
+#define DIRECTIONAL_LIGHT 2
+#define POINT_LIGHT 3
+
+
+/**
+ * Perform multiple importance sampling by combining probability
+ * distribution functions.
+ *
+ * @arg emittance: The emissive values of the surface.
+ * @arg throughput: The throughput of the ray.
+ * @arg pdf0: The first PDF.
+ * @arg pdf1: The second PDF.
+ *
+ * @returns: The multiple importance sampled colour.
+ */
+inline float4 multipleImportanceSample(
+        const float4 &emittance,
+        const float4 &throughput,
+        const float pdf0,
+        const float pdf1)
+{
+    return emittance * throughput * balanceHeuristic(pdf0, pdf1);
+}
+
+
+/**
+ * Get the probability distribution function for equi-angular sampling.
+ *
+ * @arg uniform: A uniform step distance along the ray.
+ * @arg maxRayDistance: The maximum distance the ray can travel.
+ * @arg rayOrigin: The origin of the ray.
+ * @arg rayDirection: The direction of the ray.
+ * @arg lightPosition: The position of the light.
+ * @arg distance: The equi-angular distance.
+ *
+ * @returns: The probability distribution function.
+ */
+float sampleEquiangularPDF(
+        const float uniform,
+        const float maxRayDistance,
+        const float3 &rayOrigin,
+        const float3 &rayDirection,
+        const float3 &lightPosition,
+        float &distance)
+{
+    // Get the coordinate of the closest point to the light along an
+    // infinite ray
+    const float delta = dot(lightPosition - rayOrigin, rayDirection);
+
+    // Get distance this point is from light
+    const float D = length(rayOrigin + delta * rayDirection - lightPosition);
+
+    if (D == 0.0f)
+    {
+        distance = 0.0f;
+        return 1.0f;
+    }
+
+    // Get the angle of the endpoints
+    const float thetaA = atan2(-delta, D);
+    const float thetaB = atan2(maxRayDistance - delta, D);
+
+    // Take a sample
+    const float t = D * tan(mix(thetaA, thetaB, uniform));
+
+    distance = delta + t;
+
+    if (thetaA != thetaB)
+    {
+        return D / ((thetaB - thetaA) * (D * D + t * t));
+    }
+
+    return 1.0f;
+}
+
+
+/**
+ * Get the direction, and distance of a spherical light.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg surfaceNormal: The normal to the surface at the position we
+ *     are sampling the illumination of.
+ * @arg lightDirection: Will store the direction to the light.
+ * @arg distanceToLight: Will store the distance to the light.
+ */
+inline void hdriLightData(
+        const float3 &seed,
+        const float3 &surfaceNormal,
+        float3 &lightDirection,
+        float &distanceToLight)
+{
+    lightDirection = cosineDirectionInHemisphere(surfaceNormal, seed);
+    distanceToLight = 1.0f;
+}
+
+
+/**
+ * Get the direction, and distance of a spherical light.
+ *
+ * @arg seed: The seed to use in randomization.
+ * @arg pointOnSurface: The point on the surface to compute the
+ *     light intensity at.
+ * @arg lightPosition: The position of the light.
+ * @arg radius: The radius of the sphere.
+ * @arg lightDirection: Will store the direction to the light.
+ * @arg distanceToLight: Will store the distance to the light.
+ * @arg visibleSurfaceArea: The surface area that is visible to the
+ *     position we are sampling from.
+ */
+inline void sphericalLightData(
+        const float3 &seed,
+        const float3 &pointOnSurface,
+        const float3 &lightPosition,
+        const float radius,
+        float3 &lightDirection,
+        float &distanceToLight,
+        float &visibleSurfaceArea)
+{
+    visibleSurfaceArea = 2.0f * PI * radius * radius;
+    float3 lightNormal = uniformDirectionInHemisphere(
+        normalize(pointOnSurface - lightPosition),
+        seed
+    );
+    lightDirection = lightPosition + lightNormal * radius - pointOnSurface;
+    distanceToLight = length(lightDirection);
+    lightDirection = normalize(lightDirection);
+}
+
+
+
+/**
+ * Get the direction, and distance of a directional light.
+ *
+ * @arg direction: The direction the light is travelling.
+ * @arg maxRayDistance: The maximum distance the ray can travel.
+ * @arg lightDirection: Will store the direction to the light.
+ * @arg distanceToLight: Will store the distance to the light.
+ * @arg visibleSurfaceArea: The surface area that is visible to the
+ *     position we are sampling from.
+ */
+inline void directionalLightData(
+        const float3 &direction,
+        float3 &lightDirection,
+        float &distanceToLight,
+        float &visibleSurfaceArea)
+{
+    visibleSurfaceArea = 2.0f * PI;
+    distanceToLight = 1.0f;
+    lightDirection = normalize(-direction);
+}
+
+
+/**
+ * Get the direction, and distance of a point light.
+ *
+ * @arg pointOnSurface: The point on the surface to compute the
+ *     light intensity at.
+ * @arg position: The position of the light.
+ * @arg lightDirection: Will store the direction to the light.
+ * @arg distanceToLight: Will store the distance to the light.
+ * @arg visibleSurfaceArea: The surface area that is visible to the
+ *     position we are sampling from.
+ */
+inline void pointLightData(
+        const float3 &pointOnSurface,
+        const float3 &position,
+        float3 &lightDirection,
+        float &distanceToLight,
+        float &visibleSurfaceArea)
+{
+    visibleSurfaceArea = 0.0f;
+    lightDirection = position - pointOnSurface;
+    distanceToLight = length(lightDirection);
+    lightDirection = normalize(lightDirection);
+}
+
+
+/**
+ * Get the probability distribution function for the lights in the
+ * scene.
+ *
+ * @arg numLights: The number of lights in the scene.
+ * @arg visibleSurfaceArea: The surface area that is visible to the
+ *     position we are sampling from.
+ *
+ * @returns: The probability distribution function.
+ */
+inline float sampleLightsPDF(const float numLights, const float visibleSurfaceArea)
+{
+    if (visibleSurfaceArea == 0.0f)
+    {
+        return 1.0f / numLights;
+    }
+    else
+    {
+        return 1.0f / numLights / visibleSurfaceArea;
+    }
+}
+
+
+/**
+ * Get the direction, distance, and intensity of a light.
+ *
+ * @arg intensity: The light intensity.
+ * @arg falloff: The power of the falloff of the light.
+ * @arg distanceToLight: The distance to the light.
+ *
+ * @returns: The light intensity.
+ */
+inline float lightIntensity(
+        const float intensity,
+        const float falloff,
+        const float distanceToLight)
+{
+    return intensity / pow(distanceToLight, falloff);
+}
+
+
+/**
+ * Get the direction, distance, and intensity of a light.
+ *
+ * @arg pointOnSurface: The point on the surface to compute the
+ *     light intensity at.
+ * @arg light: The light properties which depend on the light type.
+ * @arg lightType: The type of light to compute the intensity for.
+ *     0: directional
+ *     1: point
+ *     2: ambient
+ *     3: ambient occlusion
+ * @arg maxRayDistance: The maximum distance a ray can travel.
+ * @arg distanceToLight: Will store the distance to the light.
+ * @arg visibleSurfaceArea: The surface area that is visible to the
+ *     position we are sampling from.
+ * @arg lightDirection: Will store the direction to the light.
+ */
+inline void getLightData(
+        const float3 &pointOnSurface,
+        const float3 &light,
+        const int lightType,
+        float &distanceToLight,
+        float &visibleSurfaceArea,
+        float3 &lightDirection)
+{
+    if (lightType == DIRECTIONAL_LIGHT)
+    {
+        // directional
+        directionalLightData(
+            light,
+            lightDirection,
+            distanceToLight,
+            visibleSurfaceArea
+        );
+    }
+    else if (lightType == POINT_LIGHT)
+    {
+        // point
+        pointLightData(
+            pointOnSurface,
+            light,
+            lightDirection,
+            distanceToLight,
+            visibleSurfaceArea
+        );
+    }
+}
+
+
+
+//
+// Camera Utilities
+//
+
+
+/**
+ * Compute the field of view from focal length.
+ *
+ * @arg focalLength: The focal length.
+ *
+ * @returns: The equivalent field of view.
+ */
+inline float fieldOfView(const float focalLength)
+{
+    return 2 * atan(1 / focalLength);
+}
+
+
+/**
+ * Compute the aspect ratio from image format.
+ *
+ * @arg height_: The height of the image.
+ * @arg width_: The width of the image.
+ *
+ * @returns: The aspect ratio.
+ */
+inline float aspectRatio(const float height_, const float width_)
+{
+    return height_ / width_;
+}
+
+
+/**
+ *
+ */
+inline float fStopToAperture(const float fStop, const float focalLength)
+{
+    return focalLength / fStop / 1000.0f;
+}
+
+
+/**
+ * Create a projection matrix for a camera.
+ *
+ * @arg focalLength: The focal length of the camera.
+ * @arg horizontalAperture: The horizontal aperture of the camera.
+ * @arg aspect: The aspect ratio of the camera.
+ * @arg nearPlane: The distance to the near plane of the camera.
+ * @arg farPlane: The distance to the far plane of the camera.
+ *
+ * @returns: The camera's projection matrix.
+ */
+float4x4 projectionMatrix(
+        const float focalLength,
+        const float horizontalAperture,
+        const float aspect,
+        const float nearPlane,
+        const float farPlane)
+{
+    float farMinusNear = farPlane - nearPlane;
+    return float4x4(
+        2 * focalLength / horizontalAperture, 0, 0, 0,
+        0, 2 * focalLength / horizontalAperture / aspect, 0, 0,
+        0, 0, -(farPlane + nearPlane) / farMinusNear, -2 * (farPlane * nearPlane) / farMinusNear,
+        0, 0, -1, 0
+    );
+}
+
+
+/**
+ * Generate a ray out of a camera.
+ *
+ * @arg cameraWorldMatrix: The camera matrix.
+ * @arg inverseProjectionMatrix: The inverse of the projection matrix.
+ * @arg uvPosition: The UV position in the resulting image.
+ * @arg rayOrigin: Will store the origin of the ray.
+ * @arg rayDirection: Will store the direction of the ray.
+ */
+void createCameraRay(
+        const float4x4 &cameraWorldMatrix,
+        const float4x4 &inverseProjectionMatrix,
+        const float2 &uvPosition,
+        float3 &rayOrigin,
+        float3 &rayDirection)
+{
+    positionFromWorldMatrix(cameraWorldMatrix, rayOrigin);
+    float4 direction = matmul(
+        inverseProjectionMatrix,
+        float4(uvPosition.x, uvPosition.y, 0, 1)
+    );
+    matmul(
+        cameraWorldMatrix,
+        float4(direction.x, direction.y, direction.z, 0),
+        direction
+    );
+    rayDirection = normalize(float3(direction.x, direction.y, direction.z));
+}
+
+
+/**
+ * Generate a ray out of a camera.
+ *
+ * @arg cameraWorldMatrix: The camera matrix.
+ * @arg inverseProjectionMatrix: The inverse of the projection matrix.
+ * @arg uvPosition: The UV position in the resulting image.
+ * @arg rayOrigin: Will store the origin of the ray.
+ * @arg rayDirection: Will store the direction of the ray.
+ */
+void createCameraRay(
+        const float4x4 &cameraWorldMatrix,
+        const float4x4 &inverseProjectionMatrix,
+        const float2 &uvPosition,
+        const float aperture,
+        const float focalDistance,
+        const float3 &seed,
+        float3 &rayOrigin,
+        float3 &rayDirection)
+{
+    createCameraRay(
+        cameraWorldMatrix,
+        inverseProjectionMatrix,
+        uvPosition,
+        rayOrigin,
+        rayDirection
+    );
+
+    const float4 cameraForward4 = matmul(
+        cameraWorldMatrix,
+        float4(0, 0, -1, 0)
+    );
+    const float3 cameraForward = float3(
+        cameraForward4.x,
+        cameraForward4.y,
+        cameraForward4.z
+    );
+    const float4 cameraRight4 = matmul(
+        cameraWorldMatrix,
+        float4(1, 0, 0, 0)
+    );
+    const float3 cameraRight = float3(
+        cameraRight4.x,
+        cameraRight4.y,
+        cameraRight4.z
+    );
+    const float4 cameraUp4 = matmul(
+        cameraWorldMatrix,
+        float4(0, 1, 0, 0)
+    );
+    const float3 cameraUp = float3(
+        cameraUp4.x,
+        cameraUp4.y,
+        cameraUp4.z
+    );
+
+    const float3 focalPlanePoint = rayOrigin + cameraForward * focalDistance;
+    const float3 focalPlaneNormal = -cameraForward;
+
+    const float focalPointDistance = (
+        (dot(focalPlaneNormal, focalPlanePoint) - dot(rayOrigin, focalPlaneNormal))
+        / dot(rayDirection, focalPlaneNormal)
+    );
+    const float3 focalPoint = rayOrigin + focalPointDistance * rayDirection;
+
+    const float2 pointInUnitCircle = uniformPointInUnitCircle(seed);
+    const float2 offset = pointInUnitCircle.x * aperture * float2(
+        cos(pointInUnitCircle.y),
+        sin(pointInUnitCircle.y)
+    );
+
+    rayOrigin += cameraRight * offset.x + cameraUp * offset.y;
+    rayDirection = normalize(focalPoint - rayOrigin);
+}
+
+
+/**
+ * Generate a LatLong ray out of a camera.
+ *
+ * @arg cameraWorldMatrix: The camera matrix.
+ * @arg uvPosition: The UV position in the resulting image.
+ * @arg rayOrigin: Will store the origin of the ray.
+ * @arg rayDirection: Will store the direction of the ray.
+ */
+void createLatLongCameraRay(
+        const float4x4 &cameraWorldMatrix,
+        const float2 &uvPosition,
+        float3 &rayOrigin,
+        float3 &rayDirection)
+{
+    positionFromWorldMatrix(cameraWorldMatrix, rayOrigin);
+    rayDirection = sphericalUnitVectorToCartesion(uvPositionToAngles(uvPosition));
+
+    float3x3 cameraRotation;
+    rotationFromWorldMatrix(cameraWorldMatrix, cameraRotation);
+    rayDirection = matmul(cameraRotation, rayDirection);
+}
+
+
+
+kernel FogKernel : ImageComputationKernel<ePixelWise>
+{
+    // the input which specifies the format, process is called once per pixel
+    // in this image, which also provides random seeds
+    Image<eRead, eAccessPoint, eEdgeNone> noise;
+    Image<eRead, eAccessPoint, eEdgeNone> depth;
+
+    // the hdri in latlong format
+    Image<eRead, eAccessRandom, eEdgeNone> hdri;
+
+    // noise options.x translation.yzw
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams0;
+
+    // octaves.x, lacunarity.y, gain.z, gamma.w
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams1;
+    // size.x
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams2;
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams3;
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams4;
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams5;
+    Image<eRead, eAccessRandom, eEdgeNone> noiseParams6;
+
+    // the input lights direction/position.xyz intensity.w
+    Image<eRead, eAccessRandom, eEdgeNone> lights;
+
+    // colour.xyz, type.w
+    // w in [0, 1) = directional, [1, inf) = point
+    Image<eRead, eAccessRandom, eEdgeNone> lightProperties;
+
+    // shadow hardness.x
+    Image<eRead, eAccessRandom, eEdgeNone> lightProperties1;
+
+    // the precomputed irradiance of the hdri
+    Image<eRead, eAccessRandom, eEdgeClamped> irradiance;
+
+
+    // the output image
+    Image<eWrite> dst;
+
+
+    param:
+        // These parameters are made available to the user.
+
+        // Camera params
+        float _focalLength;
+        float _horizontalAperture;
+        float _nearPlane;
+        float _farPlane;
+        float4x4 _cameraWorldMatrix;
+        float _focalDistance;
+        float _fStop;
+        bool _depthOfFieldEnabled;
+
+        // Image params
+        float _formatWidth;
+        float _formatHeight;
+
+        float _hdriOffsetAngle;
+        bool _usePrecomputedIrradiance;
+
+        // Ray params
+        int _pathsPerPixel;
+        bool _sampleHDRI;
+        float _hitTolerance;
+        float _maxBrightness;
+
+        // Scene params
+        float4 _scatteringCoefficient;
+        float4 _extinctionCoefficient;
+        int _equiangularSamples;
+
+        // Shape Textures
+        int _lightTextureWidth;
+
+        bool _latLong;
+
+
+    local:
+        // These local variables are not exposed to the user.
+
+        float4x4 __inverseCameraProjectionMatrix;
+        float __aperture;
+
+        float2 __hdriPixelSize;
+        float2 __irradiancePixelSize;
+        float __hdriOffsetRadians;
+
+        float3 __offset0;
+        float3 __offset1;
+        float3 __offset2;
+        float3 __offset3;
+
+        int __simplex[64][4];
+        int __perm[512];
+        int __grad4[32][4];
+
+    /**
+     * Give the parameters labels and default values.
+     */
+    void define()
+    {
+        // Camera params
+        defineParam(_focalLength, "Focal Length", 50.0f);
+        defineParam(_horizontalAperture, "Horizontal Aperture", 24.576f);
+        defineParam(_nearPlane, "Near Plane", 0.1f);
+        defineParam(_farPlane, "Far Plane", 10000.0f);
+        defineParam(
+            _cameraWorldMatrix,
+            "Camera World Matrix",
+            float4x4(
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            )
+        );
+        defineParam(_focalDistance, "Focal Distance", 4.0f);
+        defineParam(_fStop, "fstop", 16.0f);
+        defineParam(_depthOfFieldEnabled, "Enable Depth Of Field", true);
+
+        // Image params
+        defineParam(_formatHeight, "Screen Height", 2160.0f);
+        defineParam(_formatWidth, "Screen Width", 3840.0f);
+        defineParam(_hdriOffsetAngle, "HDRI Offset Angle", 0.0f);
+        defineParam(_usePrecomputedIrradiance, "Use Precomputed Irradiance", true);
+
+        // Ray params
+        defineParam(_pathsPerPixel, "Paths Per Pixel", 1);
+        defineParam(_sampleHDRI, "Sample HDRI", true);
+        defineParam(_hitTolerance, "Hit Tolerance", 0.001f);
+        defineParam(_maxBrightness, "Maximum Brightness", 999999.9f);
+
+        // Scene params
+        defineParam(_scatteringCoefficient, "Scattering Coefficient", float4(0));
+        defineParam(_extinctionCoefficient, "Extinction Coefficient", float4(1));
+        defineParam(_equiangularSamples, "Equi-Angular Samples", 5);
+
+        // Shape Counts
+        defineParam(_lightTextureWidth, "Light Texture Width", 0);
+
+        defineParam(_latLong, "Output LatLong", false);
+    }
+
+
+    /**
+     * Initialize the local variables.
+     */
+    void init()
+    {
+        const float aspect = aspectRatio(_formatHeight, _formatWidth);
+        float4x4 cameraProjectionMatrix = projectionMatrix(
+            _focalLength,
+            _horizontalAperture,
+            aspect,
+            _nearPlane,
+            _farPlane
+        );
+        __inverseCameraProjectionMatrix = cameraProjectionMatrix.invert();
+
+        __aperture = fStopToAperture(_fStop, _focalLength);
+
+        __hdriPixelSize = float2(
+            hdri.bounds.width() / (2 * PI),
+            hdri.bounds.height() / PI
+        );
+        __irradiancePixelSize = float2(
+            irradiance.bounds.width() / (2 * PI),
+            irradiance.bounds.height() / PI
+        );
+        __hdriOffsetRadians = degreesToRadians(_hdriOffsetAngle);
+
+        __offset0 = 0.5773f * float3(1, -1, -1);
+        __offset1 = 0.5773f * float3(-1, -1, 1);
+        __offset2 = 0.5773f * float3(-1, 1, -1);
+        __offset3 = 0.5773f * float3(1, 1, 1);
+
+        const int simplexInit[64][4] = {
+            {0, 1, 2, 3}, {0, 1, 3, 2}, {0, 0, 0, 0}, {0, 2, 3, 1},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {1, 2, 3, 0},
+            {0, 2, 1, 3}, {0, 0, 0, 0}, {0, 3, 1, 2}, {0, 3, 2, 1},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {1, 3, 2, 0},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {1, 2, 0, 3}, {0, 0, 0, 0}, {1, 3, 0, 2}, {0, 0, 0, 0},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {2, 3, 0, 1}, {2, 3, 1, 0},
+            {1, 0, 2, 3}, {1, 0, 3, 2}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {0, 0, 0, 0}, {2, 0, 3, 1}, {0, 0, 0, 0}, {2, 1, 3, 0},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {2, 0, 1, 3}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {3, 0, 1, 2}, {3, 0, 2, 1}, {0, 0, 0, 0}, {3, 1, 2, 0},
+            {2, 1, 0, 3}, {0, 0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0},
+            {3, 1, 0, 2}, {0, 0, 0, 0}, {3, 2, 0, 1}, {3, 2, 1, 0}
+        };
+
+        for (int i = 0; i < 64; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                __simplex[i][j] = simplexInit[i][j];
+            }
+        }
+
+        const int permInit[256] = {
+            151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233,
+            7, 225, 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23,
+            190, 6, 148, 247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219,
+            203, 117, 35, 11, 32, 57, 177, 33, 88, 237, 149, 56, 87, 174,
+            20, 125, 136, 171, 168, 68, 175, 74, 165, 71, 134, 139, 48,
+            27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133,
+            230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65,
+            25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18,
+            169, 200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198,
+            173, 186, 3, 64, 52, 217, 226, 250, 124, 123, 5, 202, 38, 147,
+            118, 126, 255, 82, 85, 212, 207, 206, 59, 227, 47, 16, 58, 17,
+            182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2, 44,
+            154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22,
+            39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112,
+            104, 218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12,
+            191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239, 107, 49,
+            192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121,
+            50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29,
+            24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180
+        };
+
+        for (int i = 0; i < 512; i++)
+        {
+            __perm[i] = permInit[i % 256];
+        }
+
+        const int grad4Init[32][4]= {
+            {0, 1, 1, 1},  {0, 1, 1, -1},  {0, 1, -1, 1},  {0, 1, -1, -1},
+            {0, -1, 1, 1}, {0, -1, 1, -1}, {0, -1, -1, 1}, {0, -1, -1, -1},
+            {1, 0, 1, 1},  {1, 0, 1, -1},  {1, 0, -1, 1},  {1, 0, -1, -1},
+            {-1, 0, 1, 1}, {-1, 0, 1, -1}, {-1, 0, -1, 1}, {-1, 0, -1, -1},
+            {1, 1, 0, 1},  {1, 1, 0, -1},  {1, -1, 0, 1},  {1, -1, 0, -1},
+            {-1, 1, 0, 1}, {-1, 1, 0, -1}, {-1, -1, 0, 1}, {-1, -1, 0, -1},
+            {1, 1, 1, 0},  {1, 1, -1, 0},  {1, -1, 1, 0},  {1, -1, -1, 0},
+            {-1, 1, 1, 0}, {-1, 1, -1, 0}, {-1, -1, 1, 0}, {-1, -1, -1, 0}
+        };
+
+        for (int i = 0; i < 32; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                __grad4[i][j] = grad4Init[i][j];
+            }
+        }
+    }
+
+
+    /**
+     * Get the noise value at a position.
+     *
+     * @arg index: The index of the noise.
+     * @arg position: The position at which we want the noise.
+     * @arg noiseOptions: The noise modifier options.
+     *
+     * @returns: The noise value.
+     */
+    float getNoiseValue(const float3 &position, int &noiseOptions)
+    {
+        // Make sure there is a noise node plugged into the object.
+        noiseOptions = (int) noiseParams0(0, 0, 0);
+        const float size = noiseParams2(0, 0, 0);
+        if ((noiseOptions & NOISE_ENABLED) == 0 || size == 0.0f)
+        {
+            return -1.0f;
+        }
+        // TODO make all these knobs on main node
+        // Read the noise parameters
+        const float3 translation = float3(
+            noiseParams0(0, 0, 1),
+            noiseParams0(0, 0, 2),
+            noiseParams0(0, 0, 3)
+        );
+        const int octaves = noiseParams1(0, 0, 0);
+        const float lacunarity = noiseParams1(0, 0, 1);
+        const float gain = noiseParams1(0, 0, 2);
+        const float gamma = noiseParams1(0, 0, 3);
+        const float4 lowFrequency = noiseParams3(0, 0);
+        const float4 highFrequency = noiseParams4(0, 0);
+        const float4 lowFrequencyEvolution = noiseParams5(0, 0);
+        const float4 highFrequencyEvolution = noiseParams6(0, 0);
+
+        // Translate the noise, and convert the position to the local
+        // coordinate system
+        float3 noisePosition = position + translation;
+
+        // Get the noise value based on which type of noise we are using
+        const float4 noisePosition4d = float4(
+            noisePosition.x,
+            noisePosition.y,
+            noisePosition.z,
+            0.0f
+        );
+        float noiseValue;
+        if (noiseOptions & FBM_NOISE)
+        {
+            noiseValue = fractalBrownianMotionNoise(
+                octaves,
+                lacunarity,
+                size,
+                gain,
+                gamma,
+                noisePosition4d,
+                lowFrequency,
+                highFrequency,
+                lowFrequencyEvolution,
+                highFrequencyEvolution,
+                __simplex,
+                __perm,
+                __grad4
+            );
+        }
+        else
+        {
+            noiseValue = turbulenceNoise(
+                octaves,
+                lacunarity,
+                size,
+                gain,
+                gamma,
+                noisePosition4d,
+                lowFrequency,
+                highFrequency,
+                lowFrequencyEvolution,
+                highFrequencyEvolution,
+                __simplex,
+                __perm,
+                __grad4
+            );
+        }
+
+        // TODO and these
+        // Modify the noise using the grade parameters
+        const float whitePoint = noiseParams2(0, 0, 1);
+        const float blackPoint = noiseParams2(0, 0, 2);
+        const float lift = noiseParams2(0, 0, 3);
+
+        if (whitePoint != blackPoint)
+        {
+            noiseValue = saturate((noiseValue - blackPoint) / (whitePoint - blackPoint));
+        }
+
+        noiseValue = saturate(noiseValue * (1.0f - lift) + lift);
+
+        if (noiseOptions & INVERT_NOISE)
+        {
+            noiseValue = 1.0f - noiseValue;
+        }
+
+        return noiseValue;
+    }
+
+
+    /**
+     * Get the value of hdri the ray would hit at infinite distance
+     *
+     * @arg rayDirection: The direction of the ray.
+     *
+     * @returns: The colour of the pixel in the direction of the ray.
+     */
+    float4 readHDRIValue(float3 rayDirection)
+    {
+        const float2 angles = cartesionUnitVectorToSpherical(rayDirection, __hdriOffsetRadians);
+
+        // Should be able to say image access is eEdgeClamped and not do this
+        // but I see nan pixels sooo... :(
+        const float2 indices = clamp(
+            float2(
+                __hdriPixelSize.x * angles.x,
+                hdri.bounds.height() - (__hdriPixelSize.y * angles.y)
+            ),
+            float2(0),
+            float2(hdri.bounds.width(), hdri.bounds.height()) - 1.0f
+        );
+
+        return bilinear(hdri, indices.x, indices.y);
+    }
+
+
+    /**
+     * Get the value of irradiance the hdri would provide in a direction
+     *
+     * @arg rayDirection: The direction of the ray.
+     *
+     * @returns: The colour of the pixel in the direction of the ray.
+     */
+    inline float4 readIrradianceValue(float3 rayDirection)
+    {
+        const float2 angles = cartesionUnitVectorToSpherical(rayDirection, __hdriOffsetRadians);
+
+        // Should be able to say image access is eEdgeClamped and not do this
+        // but I see nan pixels sooo... :(
+        const float2 indices = clamp(
+            float2(
+                __irradiancePixelSize.x * angles.x,
+                irradiance.bounds.height() - (__irradiancePixelSize.y * angles.y)
+            ),
+            float2(0),
+            float2(irradiance.bounds.width(), irradiance.bounds.height()) - 1.0f
+        );
+
+        return bilinear(irradiance, indices.x, indices.y);
+    }
+
+
+    /**
+     * Estimate the surface normal at the closest point on the closest
+     * object to a point
+     *
+     * @arg point: The point near which to get the surface normal
+     * @arg pixelFootprint: A value proportional to the amount of world
+     *     space that fills a pixel, like the distance from camera.
+     *
+     * @returns: The normalized surface normal.
+     */
+    float3 estimateSurfaceNormal(const float3 &point)
+    {
+        int noiseOptions;
+        return normalize(
+            __offset0 * getNoiseValue(
+                point + __offset0 * _hitTolerance,
+                noiseOptions
+            )
+            + __offset1 * getNoiseValue(
+                point + __offset1 * _hitTolerance,
+                noiseOptions
+            )
+            + __offset2 * getNoiseValue(
+                point + __offset2 * _hitTolerance,
+                noiseOptions
+            )
+            + __offset3 * getNoiseValue(
+                point + __offset3 * _hitTolerance,
+                noiseOptions
+            )
+        );
+    }
+
+
+    /**
+     * Sample the data of a particular artificial light in the scene.
+     * Artificial lights are any that are passed into the 'lights'
+     * input.
+     *
+     * @arg position: The position on the surface to sample the data of.
+     * @arg lightIndex: The index of the chosen light in the lights
+     *     texture.
+     * @arg numLights: The number of lights in the scene.
+     * @arg lightDirection: The direction from the surface to the light.
+     * @arg distanceToLight: The distance to the light's surface.
+     *
+     * @returns: The PDF of the light.
+     */
+    float sampleArtificialLightData(
+            const float3 &position,
+            const int lightIndex,
+            const int numLights,
+            float3 &lightDirection,
+            float &distanceToLight)
+    {
+        float visibleSurfaceArea = 1.0f;
+
+        // Selected a 'fake' light eg. point, directional, ambient
+        SampleType(lights) light = lights(lightIndex, 0);
+        const int lightType = abs((int) lightProperties(lightIndex, 0, 3));
+
+        if (lightType > 1)
+        {
+            getLightData(
+                position,
+                float3(light.x, light.y, light.z),
+                lightType,
+                distanceToLight,
+                visibleSurfaceArea,
+                lightDirection
+            );
+        }
+
+        return sampleLightsPDF(max(1, numLights), visibleSurfaceArea);
+    }
+
+
+    /**
+     * Perform direct illumination light sampling on a chosen artificial
+     * light in the scene.
+     *
+     * @arg pointOnSurface: The point on the surface to compute the
+     *     light intensity at.
+     * @arg surfaceNormal: The normal to the surface at the position we
+     *     are sampling the illumination of.
+     * @arg lightDirection: The direction from the surface to the light.
+     * @arg distanceToLight: The distance to the light's surface.
+     * @arg selectedLight: The index of the chosen light to sample.
+     *
+     * @returns: The colour of the sampled light.
+     */
+    inline float4 sampleArtificialLight(
+            const float3 &pointOnSurface,
+            const float3 &surfaceNormal,
+            const float3 &lightDirection,
+            const float distanceToLight,
+            const int selectedLight)
+    {
+        // Read the light properties
+        SampleType(lights) light = lights(selectedLight, 0);
+        SampleType(lightProperties) lightProperty = lightProperties(selectedLight, 0);
+        SampleType(lightProperties1) lightProperty1 = lightProperties1(selectedLight, 0);
+
+        float intensity;
+
+        int lightType = (int) lightProperty.w;
+        int absLightType = abs(lightType);
+
+        if (absLightType == AMBIENT_LIGHT)
+        {
+            // Ambient light, simply return the intensity.
+            intensity = light.w;
+        }
+        else
+        {
+            intensity = lightIntensity(
+                light.w,
+                lightProperty1.y,
+                distanceToLight
+            );
+        }
+
+        return intensity * float4(
+            lightProperty.x,
+            lightProperty.y,
+            lightProperty.z,
+            0
+        );
+    }
+
+
+    /**
+     * Perform equi-angular sampling for participating media.
+     *
+     * @arg seed: The seed to use in randomization.
+     * @arg intersectionPosition: The position at which the ray
+     *     intersects the geometry.
+     * @arg rayOrigin: The ray origin.
+     * @arg rayDirection: The incoming ray direction.
+     * @arg distance: The distance travelled since the
+     *     last bounce.
+     * @arg emissiveIndices: The indices of the emissive objects in the
+     *     scene.
+     * @arg nestedDielectrics: The stack of dielectrics that we have
+     *     entered without exiting.
+     * @arg numNestedDielectrics: The number of dielectrics in the
+     *     stack.
+     * @arg throughput: The throughput of the ray.
+     *
+     * @returns: The colour of the ray.
+     */
+    float4 sampleEquiangular(
+            const float3 &seed,
+            const float3 &intersectionPosition,
+            const float3 &rayOrigin,
+            const float3 &rayDirection,
+            const float distance,
+            float4 &throughput)
+    {
+        float4 scatteredColour = float4(0);
+
+        if (
+            length(_scatteringCoefficient) <= 0.0f
+            && length(_extinctionCoefficient) <= 0.0f
+        ) {
+            throughput *= exp(-_extinctionCoefficient * distance);
+            return scatteredColour;
+        }
+
+        for (int lightIndex=0; lightIndex < _lightTextureWidth; lightIndex++)
+        {
+            float3 lightDirection = float3(0.0f, 1.0f, 0.0f);
+            float distanceToLight = 0.0f;
+            int selectedLight;
+            const float lightPDF = sampleArtificialLightData(
+                intersectionPosition,
+                lightIndex,
+                _lightTextureWidth,
+                lightDirection,
+                distanceToLight
+            );
+
+            const float3 lightPosition = intersectionPosition + lightDirection * distanceToLight;
+
+            const float offset = random(random(seed.z) + random(seed.y + random(seed.x)));
+
+            float extinctionNoiseSum = 0.0f;
+
+            for (int step=1; step <= _equiangularSamples; step++)
+            {
+                const float uniform = (step + offset - 1) / (float) _equiangularSamples;
+
+                float equiangularDistance;
+                float equiangularPDF = _equiangularSamples * sampleEquiangularPDF(
+                    uniform,
+                    distance,
+                    rayOrigin,
+                    rayDirection,
+                    lightPosition,
+                    equiangularDistance
+                );
+
+                const float3 particlePosition = rayOrigin + equiangularDistance * rayDirection;
+                const float3 surfaceNormal = randomUnitVector(particlePosition);
+                const float geometryFactor = saturate(dot(lightDirection, surfaceNormal));
+                const float3 particleToLight = lightPosition - particlePosition;
+                distanceToLight = length(particleToLight);
+
+                if (distanceToLight > 0.0f)
+                {
+                    lightDirection = normalize(particleToLight);
+                }
+
+                int noiseOptions;
+                float noiseValue = getNoiseValue(particlePosition, noiseOptions);
+                float scatteringNoise = noiseValue;
+                float extinctionNoise = noiseValue;
+                if (noiseValue < 0.0f || !(noiseOptions & SCATTERING_NOISE))
+                {
+                    scatteringNoise = 1.0f;
+                }
+                if (noiseValue < 0.0f || !(noiseOptions & EXTINCTION_NOISE))
+                {
+                    extinctionNoise = 1.0f;
+                }
+
+                extinctionNoiseSum += extinctionNoise;
+
+                const float4 lightBRDF = exp(
+                    -_extinctionCoefficient
+                    * extinctionNoise
+                    * (distanceToLight + equiangularDistance)
+                );
+
+                scatteredColour += (
+                    _scatteringCoefficient
+                    * scatteringNoise
+                    * throughput
+                    * lightBRDF
+                    * geometryFactor
+                    * sampleArtificialLight(
+                        particlePosition,
+                        surfaceNormal,
+                        lightDirection,
+                        distanceToLight,
+                        lightIndex
+                    ) / lightPDF
+                );
+            }
+
+            throughput *= exp(
+                -_extinctionCoefficient
+                * extinctionNoiseSum
+                * distance
+                / (float) _equiangularSamples
+            ) / lightPDF;
+        }
+
+        return scatteredColour;
+    }
+
+
+    /**
+     * Perform equi-angular sampling for participating media.
+     *
+     * @arg seed: The seed to use in randomization.
+     * @arg intersectionPosition: The position at which the ray
+     *     intersects the geometry.
+     * @arg rayOrigin: The ray origin.
+     * @arg rayDirection: The incoming ray direction.
+     * @arg distance: The distance travelled since the
+     *     last bounce.
+     * @arg emissiveIndices: The indices of the emissive objects in the
+     *     scene.
+     * @arg nestedDielectrics: The stack of dielectrics that we have
+     *     entered without exiting.
+     * @arg numNestedDielectrics: The number of dielectrics in the
+     *     stack.
+     * @arg throughput: The throughput of the ray.
+     *
+     * @returns: The colour of the ray.
+     */
+    float4 sampleNoise(
+            const float3 &seed,
+            const float3 &rayOrigin,
+            const float3 &rayDirection,
+            const float distance,
+            float4 &throughput)
+    {
+        float noiseSum = 0.0f;
+        float invertedLastSample = 1.0f;
+        for (int step=1; step <= _equiangularSamples; step++)
+        {
+            const float uniform = distance * (float) step / (float) _equiangularSamples;
+            const float3 particlePosition = rayOrigin + uniform * rayDirection;
+
+            int noiseOptions;
+            float noiseValue = getNoiseValue(particlePosition, noiseOptions) * _hitTolerance;
+            noiseSum += noiseValue * invertedLastSample;
+
+            invertedLastSample *= 1.0f - noiseValue;
+        }
+
+        return float4(noiseSum, noiseSum, noiseSum, noiseSum);
+    }
+
+
+    /**
+     * Create a ray out of the camera. It will be either a standard ray,
+     * a latlong ray, or a ray that will result in depth of field.
+     *
+     * @arg seed: The seed to use in randomization.
+     * @arg pixelLocation: The x, and y locations of the pixel.
+     * @arg rayOrigin: The location to store the origin of the new ray.
+     * @arg rayDirection: The location to store the direction of the new
+     *     ray.
+     */
+    void getCameraRay(
+            const float3 &seed,
+            const float2 &pixelLocation,
+            float3 &rayOrigin,
+            float3 &rayDirection)
+    {
+        const float2 uvCoordinates = pixelsToUV(
+            pixelLocation + random(float2(seed.x, seed.y)),
+            float2(_formatWidth, _formatHeight)
+        );
+        if (_latLong)
+        {
+            createLatLongCameraRay(
+                _cameraWorldMatrix,
+                uvCoordinates,
+                rayOrigin,
+                rayDirection
+            );
+        }
+        else if (_depthOfFieldEnabled)
+        {
+            createCameraRay(
+                _cameraWorldMatrix,
+                __inverseCameraProjectionMatrix,
+                uvCoordinates,
+                __aperture,
+                _focalDistance,
+                seed,
+                rayOrigin,
+                rayDirection
+            );
+        }
+        else
+        {
+            createCameraRay(
+                _cameraWorldMatrix,
+                __inverseCameraProjectionMatrix,
+                uvCoordinates,
+                rayOrigin,
+                rayDirection
+            );
+        }
+    }
+
+
+    /**
+     * Compute a raymarched pixel value.
+     *
+     * @arg pos: The x, and y location we are currently processing.
+     */
+    void process(int2 pos)
+    {
+        SampleType(noise) noisePixel = noise();
+        float3 seed = random(float3(noisePixel.x, noisePixel.y, noisePixel.z));
+
+        float4 resultPixel = float4(0.0f);
+
+        float2 pixelLocation = float2(pos.x, pos.y);
+
+        const float ray_depth = depth(0);
+
+        for (int path=1; path <= _pathsPerPixel; path++)
+        {
+            // Generate a ray from the camera
+            float3 rayOrigin;
+            float3 rayDirection;
+            getCameraRay(
+                seed,
+                pixelLocation,
+                rayOrigin,
+                rayDirection
+            );
+
+            float4 throughput = float4(1);
+
+            // Perform Equi-Angular Sampling
+            resultPixel += sampleNoise(
+                seed,
+                rayOrigin + ray_depth * rayDirection,
+                rayDirection,
+                ray_depth,
+                throughput
+            );
+
+            // Read the hdri value in the direction the ray was last travelling
+            resultPixel += throughput * readHDRIValue(rayDirection);
+
+            seed = RAND_CONST_10 * random(seed * path * RAND_CONST_11);
+        }
+
+        dst() = resultPixel / float(_pathsPerPixel);
+    }
+};
