@@ -1,84 +1,14 @@
-#! /usr/local/Nuke13.2v2/libnuke-13.2.2.so -nx
-version 13.2 v2
-define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
-<layout version="1.0">
-    <window x="1957" y="19" w="2523" h="1397" maximized="1" screen="0">
-        <splitter orientation="1">
-            <split size="92"/>
-            <dock id="" hideTitles="1" activePageId="Toolbar.1">
-                <page id="Toolbar.1"/>
-            </dock>
-            <split size="1808" stretch="1"/>
-            <splitter orientation="2">
-                <split size="795"/>
-                <dock id="" activePageId="Viewer.1">
-                    <page id="Viewer.1"/>
-                </dock>
-                <split size="559"/>
-                <dock id="" activePageId="DAG.1" focus="true">
-                    <page id="DAG.1"/>
-                    <page id="Curve Editor.1"/>
-                    <page id="DopeSheet.1"/>
-                    <page id="DAG.2"/>
-                </dock>
-            </splitter>
-            <split size="615"/>
-            <dock id="" activePageId="Properties.1">
-                <page id="Properties.1"/>
-                <page id="uk.co.thefoundry.backgroundrenderview.1"/>
-            </dock>
-        </splitter>
-    </window>
-</layout>
-}
-Root {
- inputs 0
- name /home/ob1/software/nuke/dev/fog/src/examples/test.nk
- frame 43
- format "2048 1556 0 0 2048 1556 1 2K_Super_35(full-ap)"
- proxy_type scale
- proxy_format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
- colorManagement OCIO
- OCIO_config aces_1.2
- defaultViewerLUT "OCIO LUTs"
- workingSpaceLUT scene_linear
- monitorLut ACES/sRGB
- monitorOutLUT "sRGB (ACES)"
- int8Lut matte_paint
- int16Lut texture_paint
- logLut compositing_log
- floatLut scene_linear
-}
-Axis3 {
- inputs 0
- rotate {0 {frame*5} 0}
- name Axis3
- xpos 688
- ypos -271
-}
-Camera3 {
- translate {0 0 10}
- focal_point 10
- fstop 0.16
- name Camera4
- xpos 688
- ypos -150
-}
-Group {
- name blink_fog_3d
+Gizmo {
  tile_color 0xffffffff
- xpos 678
- ypos -18
  addUserKnob {20 User l BlinkFog3D}
  addUserKnob {3 rays_per_pixel l "rays per pixel" t "The number of rays per pixel to sample noise on. This enables antialiasing as well as cleaning up the noise from sampling depth of field."}
  rays_per_pixel 1
  addUserKnob {3 samples_per_ray l "samples per ray" t "The number of noise samples to compute per ray. Increase this to reduce flickering. I recommend setting this low, around 5-10, until you have noise that looks about like you want, then increase this number to something like 100 for the final render."}
- samples_per_ray 100
+ samples_per_ray 5
  addUserKnob {7 density t "A multiplier that increases fog density." R 0 10}
- density 0.1
+ density 1
  addUserKnob {19 depth_ramp l "depth ramp" t "The fog will only start being sampled at the depth specified in the first value, it will be scaled up to full density at the second value, maintain that density until the depth of the third value, and then ramp back down to the depth of the final value.\n\nYou may be familiar with this curve as the A, B, C, D values on the ramp of something like a deep colour correct. Something like:\n\n++++ B ._______________. C ++++++\n+++++ / +++++++++++ \\ ++++++\n++++ / +++++++++++++ \\ +++++\n----- A * ++++++++++++++ * D ------\n" R 0 100}
  depth_ramp {7 8 12 13}
- addUserKnob {6 depth_ramp_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {6 depth_of_field l "depth of field" t "Enable depth of field. This will be determined by the focal distance and fstop of the input camera. Increase the rays per pixel to clean up the noise when using this." +STARTLINE}
  addUserKnob {6 latlong t "Render a latlong." -STARTLINE}
  addUserKnob {26 ""}
@@ -97,16 +27,12 @@ Group {
  gamma 0.5
  addUserKnob {19 low_frequency_scale l "low frequency scale" t "Scale the low frequencies by this amount separately from the high frequencies."}
  low_frequency_scale {1 1 1 1}
- addUserKnob {6 low_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_scale l "high frequency scale" t "Scale the high frequencies by this amount separately from the low frequencies."}
  high_frequency_scale {1 1 1 1}
- addUserKnob {6 high_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 low_frequency_translation l "low frequency translation" t "Translate the low frequencies by this amount separately from the high frequencies."}
  low_frequency_translation {0 0 0 0}
- addUserKnob {6 low_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_translation l "high frequency translation" t "Translate the high frequencies by this amount separately from the low frequencies."}
  high_frequency_translation {0 0 0 0}
- addUserKnob {6 high_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 div0 l "" +STARTLINE}
  addUserKnob {26 info l "" +STARTLINE T "v1.0.0 - (c) Owen Bulka & Riley Gray - 2024"}
 }
@@ -270,14 +196,3 @@ Group {
   ypos 1314
  }
 end_group
-Viewer {
- frame 43
- frame_range 1-100
- colour_sample_bbox {-0.2138671875 0.1162109375 -0.212890625 0.1171875}
- samplepoints {{0.205078125 -0.095703125}
-   }
- viewerProcess "Rec.709 (ACES)"
- name Viewer1
- xpos 678
- ypos 135
-}

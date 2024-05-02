@@ -821,11 +821,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             const float octaveFraction = octave / _octaves;
             scale = (
                 (_highFrequencyScale * octaveFraction)
-                + (_lowFrequencyScale * (1 - octaveFraction))
+                + (_lowFrequencyScale * (1.0f - octaveFraction))
             );       
             translation = (
                 (_highFrequencyTranslation * octaveFraction)
-                + (_lowFrequencyTranslation * (1 - octaveFraction))
+                + (_lowFrequencyTranslation * (1.0f - octaveFraction))
             );
 
             output += amplitude * perlinSimplexNoise(
@@ -837,7 +837,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             amplitude *= _gain;
         }
 
-        return pow(output / denom, 1.0f / _gamma);
+        return pow(fabs(output / denom), 1.0f / _gamma);
     }
 
 
@@ -862,11 +862,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             const float octaveFraction = octave / _octaves;
             scale = (
                 (_highFrequencyScale * octaveFraction)
-                + (_lowFrequencyScale * (1 - octaveFraction))
+                + (_lowFrequencyScale * (1.0f - octaveFraction))
             );       
             translation = (
                 (_highFrequencyTranslation * octaveFraction)
-                + (_lowFrequencyTranslation * (1 - octaveFraction))
+                + (_lowFrequencyTranslation * (1.0f - octaveFraction))
             );
 
             output += fabs(
