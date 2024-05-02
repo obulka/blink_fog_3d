@@ -446,6 +446,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     // the input which specifies the format, process is called once per pixel
     // in this image, which also provides random seeds
     Image<eRead, eAccessPoint, eEdgeNone> noise;
+    Image<eRead, eAccessPoint, eEdgeClamped> depthAOV;
 
     // the output image
     Image<eWrite> dst;
@@ -485,6 +486,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float4 _highFrequencyScale;
         float4 _lowFrequencyTranslation;
         float4 _highFrequencyTranslation;
+
+        bool _invertDepth;
 
     local:
         // These local variables are not exposed to the user.
@@ -540,6 +543,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_highFrequencyScale, "High Frequency Scale", float4(0.0f, 0.0f, 0.0f, 0.0f));
         defineParam(_lowFrequencyTranslation, "Low Frequency Translation", float4(0.0f, 0.0f, 0.0f, 0.0f));
         defineParam(_highFrequencyTranslation, "High Frequency Translation", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_invertDepth, "Invert Depth", false);
     }
 
 
@@ -946,6 +950,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
      */
     void process(int2 pos)
     {
+        float pixelDepth = depthAOV(0);
+        pixelDepth = (
+            pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _depthRamp.w
+        );
+
         float2 pixelLocation = float2(pos.x, pos.y);
         SampleType(noise) noisePixel = noise();
         float2 seed0 = float2(noisePixel.x, noisePixel.y) + RAND_CONST_0 * pixelLocation;
@@ -974,6 +983,10 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             for (int step=0; step < _samplesPerRay; step++)
             {
                 depth += sampleStep;
+                if (depth > pixelDepth)
+                {
+                    break;
+                }
                 rayOrigin += rayDirection * sampleStep;
 
                 // Get the noise value based on which type of noise we are using
