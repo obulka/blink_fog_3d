@@ -24,43 +24,6 @@ inline float fract(const float value)
 
 
 /**
- * Saturate a value ie. clamp between 0 and 1
- *
- * @arg value: The value to saturate
- *
- * @returns: The clamped value
- */
-inline float saturate(float value)
-{
-    return clamp(value, 0.0f, 1.0f);
-}
-
-
-/**
- * Get a rotation matrix from radian angle values in ZYX order.
- *
- * @arg angles: The rotation angles in radians.
- * @arg out: The location to store the rotation matrix.
- */
-inline void rotationMatrix(const float3 &angles, float3x3 &out)
-{
-    const float3 cosAngles = cos(angles);
-    const float3 sinAngles = sin(angles);
-
-    // Why tf can I not init a float3x3 normally??
-    out[0][0] = cosAngles.y * cosAngles.z;
-    out[0][1] = sinAngles.x * sinAngles.y * cosAngles.z - cosAngles.x * sinAngles.z;
-    out[0][2] = cosAngles.x * sinAngles.y * cosAngles.z + sinAngles.x * sinAngles.z;
-    out[1][0] = cosAngles.y * sinAngles.z;
-    out[1][1] = sinAngles.x * sinAngles.y * sinAngles.z + cosAngles.x * cosAngles.z;
-    out[1][2] = cosAngles.x * sinAngles.y * sinAngles.z - sinAngles.x * cosAngles.z;
-    out[2][0] = -sinAngles.y;
-    out[2][1] = sinAngles.x * cosAngles.y;
-    out[2][2] = cosAngles.x * cosAngles.y;
-}
-
-
-/**
  * Multiply a 4d vector by a 4x4 matrix.
  *
  * @arg m: The matrix that will transform the vector.
@@ -78,23 +41,6 @@ inline void matmul(const float4x4 &m, const float4 &v, float4 &out)
             out[i] += m[i][j] * v[j];
         }
     }
-}
-
-
-/**
- * Multiply a 3d vector by a 3x3 matrix.
- *
- * @arg m: The matrix that will transform the vector.
- * @arg v: The vector to transform.
- * @arg out: The location to store the resulting vector.
- */
-inline void matmul(const float3x3 &m, const float3 &v, float3 &out)
-{
-    out = float3(
-        m[0][0] * v.x + m[0][1] * v.y + m[0][2] * v.z,
-        m[1][0] * v.x + m[1][1] * v.y + m[1][2] * v.z,
-        m[2][0] * v.x + m[2][1] * v.y + m[2][2] * v.z
-    );
 }
 
 
@@ -282,338 +228,19 @@ inline float2 uniformPointInUnitCircle(const float2 &seed)
 }
 
 
+/**
+ * Sum the elements of a vector.
+ *
+ * @arg vector: The vector to sum the elements of.
+ *
+ * @returns: The sum of the vector elements.
+ */
+inline float element_sum(const float4 &vector) {
+    return vector.x + vector.y + vector.z + vector.w;
+}
+
+
 #define FBM_NOISE 1
-
-
-/**
- * 4D Perlin simplex noise
- *
- * Copyright (c) 2007-2012 Eliot Eshelman
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * @arg seed: The seed for the noise.
- * @arg simplex: The simplex LUT.
- * @arg perm: The perm LUT.
- * @arg grad4: The grad4 LUT.
- *
- * @returns: Noise value in the range [-1, 1], value of 0 on all integer
- *     coordinates.
- */
-inline float perlinSimplexNoise(
-        const float4 &seed,
-        const int simplex[64][4],
-        const int perm[512],
-        const int grad4[32][4])
-{
-    const float F4 = (sqrt(5.0f) - 1.0f) / 4.0f;
-    const float G4 = (5.0f - sqrt(5.0f)) / 20.0f;
-
-    const float x = seed.x;
-    const float y = seed.y;
-    const float z = seed.z;
-    const float w = seed.w;
-
-    const float s = (x + y + z + w) * F4;
-    const int i = floor(x + s);
-    const int j = floor(y + s);
-    const int k = floor(z + s);
-    const int l = floor(w + s);
-    const float t = (i + j + k + l) * G4;
-    const float X0 = i - t;
-    const float Y0 = j - t;
-    const float Z0 = k - t;
-    const float W0 = l - t;
-
-    const float x0 = x - X0;
-    const float y0 = y - Y0;
-    const float z0 = z - Z0;
-    const float w0 = w - W0;
-    const int c1 = (x0 > y0) ? 32 : 0;
-    const int c2 = (x0 > z0) ? 16 : 0;
-    const int c3 = (y0 > z0) ? 8 : 0;
-    const int c4 = (x0 > w0) ? 4 : 0;
-    const int c5 = (y0 > w0) ? 2 : 0;
-    const int c6 = (z0 > w0) ? 1 : 0;
-    const int c = c1 + c2 + c3 + c4 + c5 + c6;
-
-    const int i1 = simplex[c][0] >= 3 ? 1 : 0;
-    const int j1 = simplex[c][1] >= 3 ? 1 : 0;
-    const int k1 = simplex[c][2] >= 3 ? 1 : 0;
-    const int l1 = simplex[c][3] >= 3 ? 1 : 0;
-    const int i2 = simplex[c][0] >= 2 ? 1 : 0;
-    const int j2 = simplex[c][1] >= 2 ? 1 : 0;
-    const int k2 = simplex[c][2] >= 2 ? 1 : 0;
-    const int l2 = simplex[c][3] >= 2 ? 1 : 0;
-    const int i3 = simplex[c][0] >= 1 ? 1 : 0;
-    const int j3 = simplex[c][1] >= 1 ? 1 : 0;
-    const int k3 = simplex[c][2] >= 1 ? 1 : 0;
-    const int l3 = simplex[c][3] >= 1 ? 1 : 0;
-
-    const float x1 = x0 - i1 + G4;
-    const float y1 = y0 - j1 + G4;
-    const float z1 = z0 - k1 + G4;
-    const float w1 = w0 - l1 + G4;
-    const float x2 = x0 - i2 + 2.0 * G4;
-    const float y2 = y0 - j2 + 2.0 * G4;
-    const float z2 = z0 - k2 + 2.0 * G4;
-    const float w2 = w0 - l2 + 2.0 * G4;
-    const float x3 = x0 - i3 + 3.0 * G4;
-    const float y3 = y0 - j3 + 3.0 * G4;
-    const float z3 = z0 - k3 + 3.0 * G4;
-    const float w3 = w0 - l3 + 3.0 * G4;
-    const float x4 = x0 - 1.0 + 4.0 * G4;
-    const float y4 = y0 - 1.0 + 4.0 * G4;
-    const float z4 = z0 - 1.0 + 4.0 * G4;
-    const float w4 = w0 - 1.0 + 4.0 * G4;
-
-    const int ii = i & 255;
-    const int jj = j & 255;
-    const int kk = k & 255;
-    const int ll = l & 255;
-
-    const int gi0 = perm[ii + perm[jj + perm[kk + perm[ll]]]] % 32;
-    const int gi1 = perm[ii + i1 + perm[jj + j1 + perm[kk + k1 + perm[ll + l1]]]] % 32;
-    const int gi2 = perm[ii + i2 + perm[jj +j2 + perm[kk + k2 + perm[ll + l2]]]] % 32;
-    const int gi3 = perm[ii + i3 + perm[jj +j3 + perm[kk + k3 + perm[ll + l3]]]] % 32;
-    const int gi4 = perm[ii + 1 + perm[jj +1 + perm[kk + 1 + perm[ll + 1]]]] % 32;
-
-    float n0, n1, n2, n3, n4;
-    float t0 = 0.6 - x0 * x0 - y0 * y0 - z0 * z0 - w0 * w0;
-    if (t0 < 0)
-    {
-        n0 = 0.0;
-    }
-    else
-    {
-        t0 *= t0;
-        n0 = t0 * t0 * dot(
-            float4(grad4[gi0][0], grad4[gi0][2], grad4[gi0][3], grad4[gi0][3]),
-            float4(x0, y0, z0, w0)
-        );
-    }
-
-    float t1 = 0.6 - x1 * x1 - y1 * y1 - z1 * z1 - w1 * w1;
-    if (t1 < 0)
-    {
-        n1 = 0.0;
-    }
-    else
-    {
-        t1 *= t1;
-        n1 = t1 * t1 * dot(
-            float4(grad4[gi1][0], grad4[gi1][2], grad4[gi1][3], grad4[gi1][3]),
-            float4(x1, y1, z1, w1)
-        );
-    }
-
-    float t2 = 0.6 - x2 * x2 - y2 * y2 - z2 * z2 - w2 * w2;
-    if (t2 < 0)
-    {
-        n2 = 0.0;
-    }
-    else
-    {
-        t2 *= t2;
-        n2 = t2 * t2 * dot(
-            float4(grad4[gi2][0], grad4[gi2][2], grad4[gi2][3], grad4[gi2][3]),
-            float4(x2, y2, z2, w2)
-        );
-    }
-
-    float t3 = 0.6 - x3 * x3 - y3 * y3 - z3 * z3 - w3 * w3;
-    if (t3 < 0)
-    {
-        n3 = 0.0;
-    }
-    else
-    {
-        t3 *= t3;
-        n3 = t3 * t3 * dot(
-            float4(grad4[gi3][0], grad4[gi3][2], grad4[gi3][3], grad4[gi3][3]),
-            float4(x3, y3, z3, w3)
-        );
-    }
-
-    float t4 = 0.6 - x4 * x4 - y4 * y4 - z4 * z4 - w4 * w4;
-    if (t4 < 0)
-    {
-        n4 = 0.0;
-    }
-    else {
-        t4 *= t4;
-        n4 = t4 * t4 * dot(
-            float4(grad4[gi4][0], grad4[gi4][2], grad4[gi4][3], grad4[gi4][3]),
-            float4(x4, y4, z4, w4)
-        );
-    }
-
-    return 27.0 * (n0 + n1 + n2 + n3 + n4);
-}
-
-
-//
-// Use the perlin simplex noise
-//
-
-
-/**
- * fBM noise.
- *
- * @arg octaves: The number of different frequencies to use.
- * @arg lacunarity: The per octave frequency multiplier.
- * @arg size: The size of the noise.
- * @arg gain: The per octave amplitude multiplier.
- * @arg gamma: The result will be raised to 1 over this power.
- * @arg position: The position to seed the noise.
- * @arg lowFrequencyScale: The amount to scale the lower frequencies by.
- * @arg highFrequencyScale: The amount to scale the higher frequencies by.
- * @arg lowFrequencyTranslation: The translation of the lower frequencies.
- * @arg highFrequencyTranslation: The translation of the higher frequencies.
- * @arg simplex: The simplex LUT.
- * @arg perm: The perm LUT.
- * @arg grad4: The grad4 LUT.
- *
- * @returns: The noise value in the range [-1, 1].
- */
-float fractalBrownianMotionNoise(
-        const float octaves,
-        const float lacunarity,
-        const float size,
-        const float gain,
-        const float gamma,
-        const float4 &position,
-        const float4 &lowFrequencyScale,
-        const float4 &highFrequencyScale,
-        const float4 &lowFrequencyTranslation,
-        const float4 &highFrequencyTranslation,
-        const int simplex[64][4],
-        const int perm[512],
-        const int grad4[32][4])
-{
-    float output = 0.0f;
-    float frequency = lacunarity;
-    float amplitude = 1.0f;
-    float denom = 0.0f;
-    float4 translation;
-    float4 scale;
-
-    for (int octave=0; octave < octaves; octave++)
-    {
-        const float octaveFraction = octave / octaves;
-        scale = (
-            (highFrequencyScale * octaveFraction)
-            + (lowFrequencyScale * (1 - octaveFraction))
-        );       
-        translation = (
-            (highFrequencyTranslation * octaveFraction)
-            + (lowFrequencyTranslation * (1 - octaveFraction))
-        );
-
-        output += amplitude * perlinSimplexNoise(
-            (position * scale + translation) * frequency / size,
-            simplex,
-            perm,
-            grad4
-        );
-
-        frequency *= lacunarity;
-        denom += amplitude;
-        amplitude *= gain;
-    }
-
-    if (denom == 0.0f || gamma == 0.0f)
-    {
-        return 1.0f;
-    }
-    return pow(output / denom, 1.0f / gamma);
-}
-
-
-/**
- * Turbulence noise.
- *
- * @arg octaves: The number of different frequencies to use.
- * @arg lacunarity: The per octave frequency multiplier.
- * @arg size: The size of the noise.
- * @arg gain: The per octave amplitude multiplier.
- * @arg gamma: The result will be raised to 1 over this power.
- * @arg position: The position to seed the noise.
- * @arg lowFrequencyScale: The amount to scale the lower frequencies by.
- * @arg highFrequencyScale: The amount to scale the higher frequencies by.
- * @arg lowFrequencyTranslation: The translation of the lower frequencies.
- * @arg highFrequencyTranslation: The translation of the higher frequencies.
- * @arg simplex: The simplex LUT.
- * @arg perm: The perm LUT.
- * @arg grad4: The grad4 LUT.
- *
- * @returns: The noise value in the range [0, 1].
- */
-float turbulenceNoise(
-        const float octaves,
-        const float lacunarity,
-        const float size,
-        const float gain,
-        const float gamma,
-        const float4 &position,
-        const float4 &lowFrequencyScale,
-        const float4 &highFrequencyScale,
-        const float4 &lowFrequencyTranslation,
-        const float4 &highFrequencyTranslation,
-        const int simplex[64][4],
-        const int perm[512],
-        const int grad4[32][4])
-{
-    float output = 0.0f;
-    float frequency = lacunarity;
-    float amplitude = 1.0f;
-    float denom = 0.0f;
-    float4 translation;
-    float4 scale;
-
-    for (int octave=0; octave < octaves; octave++)
-    {
-        const float octaveFraction = octave / octaves;
-        scale = (
-            (highFrequencyScale * octaveFraction)
-            + (lowFrequencyScale * (1 - octaveFraction))
-        );       
-        translation = (
-            (highFrequencyTranslation * octaveFraction)
-            + (lowFrequencyTranslation * (1 - octaveFraction))
-        );
-
-        output += fabs(
-            amplitude * perlinSimplexNoise(
-                (position * scale + translation) * frequency / size,
-                simplex,
-                perm,
-                grad4
-            )
-        );
-
-        frequency *= lacunarity;
-        denom += amplitude;
-        amplitude *= gain;
-    }
-
-    if (denom == 0.0f || gamma == 0.0f)
-    {
-        return 1.0f;
-    }
-    return pow(output / denom, 1.0f / gamma);
-}
 
 
 //
@@ -1007,6 +634,255 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         }
     }
 
+    /**
+     * 4D Perlin simplex noise
+     *
+     * Copyright (c) 2007-2012 Eliot Eshelman
+     *
+     * This program is free software: you can redistribute it and/or modify
+     * it under the terms of the GNU General Public License as published by
+     * the Free Software Foundation, either version 3 of the License, or
+     * (at your option) any later version.
+     *
+     * This program is distributed in the hope that it will be useful,
+     * but WITHOUT ANY WARRANTY; without even the implied warranty of
+     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+     * GNU General Public License for more details.
+     *
+     * You should have received a copy of the GNU General Public License
+     * along with this program. If not, see <http://www.gnu.org/licenses/>.
+     *
+     * @arg seed: The seed for the noise.
+     * @arg simplex: The simplex LUT.
+     * @arg perm: The perm LUT.
+     * @arg grad4: The grad4 LUT.
+     *
+     * @returns: Noise value in the range [-1, 1], value of 0 on all integer
+     *     coordinates.
+     */
+    inline float perlinSimplexNoise(
+            const float4 &seed
+    )
+    {
+        const float G4 = 0.138196601f;
+        const float4 i = floor(seed + element_sum(seed) * 0.309016994f);
+        const float4 x0 = seed - i + element_sum(i) * G4;
+
+        const int c = (
+            ((x0.x > x0.y) << 5)
+            | ((x0.x > x0.z) << 4)
+            | ((x0.y > x0.z) << 3)
+            | ((x0.x > x0.w) << 2)
+            | ((x0.y > x0.w) << 1)
+            | (x0.z > x0.w)
+        );
+        const int4 i1 = int4(
+            __simplex[c][0] >= 3,
+            __simplex[c][1] >= 3,
+            __simplex[c][2] >= 3,
+            __simplex[c][3] >= 3
+        );
+        const int4 i2 = int4(
+            __simplex[c][0] >= 2,
+            __simplex[c][1] >= 2,
+            __simplex[c][2] >= 2,
+            __simplex[c][3] >= 2
+        );
+        const int4 i3 = int4(
+            __simplex[c][0] >= 1,
+            __simplex[c][1] >= 1,
+            __simplex[c][2] >= 1,
+            __simplex[c][3] >= 1
+        );
+
+        const float4 x1 = x0 - float4(i1.x, i1.y, i1.z, i1.w) + G4;
+        const float4 x2 = x0 - float4(i2.x, i2.y, i2.z, i2.w) + 2.0f * G4;
+        const float4 x3 = x0 - float4(i3.x, i3.y, i3.z, i3.w) + 3.0f * G4;
+        const float4 x4 = x0 - 1.0f + 4.0f * G4;
+
+        const int ii = (int) i.x & 255;
+        const int jj = (int) i.y & 255;
+        const int kk = (int) i.z & 255;
+        const int ll = (int) i.w & 255;
+
+        const int gi0 = __perm[
+            ii + __perm[jj + __perm[kk + __perm[ll]]]
+        ] % 32;
+        const int gi1 = __perm[
+            ii + i1.x + __perm[jj + i1.y + __perm[kk + i1.z + __perm[ll + i1.w]]]
+        ] % 32;
+        const int gi2 = __perm[
+            ii + i2.x + __perm[jj + i2.y + __perm[kk + i2.z + __perm[ll + i2.w]]]
+        ] % 32;
+        const int gi3 = __perm[
+            ii + i3.x + __perm[jj + i3.y + __perm[kk + i3.z + __perm[ll + i3.w]]]
+        ] % 32;
+        const int gi4 = __perm[
+            ii + 1 + __perm[jj + 1 + __perm[kk + 1 + __perm[ll + 1]]]
+        ] % 32;
+
+        float n0, n1, n2, n3, n4;
+        float t0 = 0.6f - dot(x0, x0);
+        if (t0 < 0)
+        {
+            n0 = 0.0f;
+        }
+        else
+        {
+            t0 *= t0;
+            n0 = t0 * t0 * dot(
+                float4(__grad4[gi0][0], __grad4[gi0][2], __grad4[gi0][3], __grad4[gi0][3]),
+                x0
+            );
+        }
+
+        float t1 = 0.6f - dot(x1, x1);
+        if (t1 < 0)
+        {
+            n1 = 0.0f;
+        }
+        else
+        {
+            t1 *= t1;
+            n1 = t1 * t1 * dot(
+                float4(__grad4[gi1][0], __grad4[gi1][2], __grad4[gi1][3], __grad4[gi1][3]),
+                x1
+            );
+        }
+
+        float t2 = 0.6f - dot(x2, x2);
+        if (t2 < 0)
+        {
+            n2 = 0.0f;
+        }
+        else
+        {
+            t2 *= t2;
+            n2 = t2 * t2 * dot(
+                float4(__grad4[gi2][0], __grad4[gi2][2], __grad4[gi2][3], __grad4[gi2][3]),
+                x2
+            );
+        }
+
+        float t3 = 0.6f - dot(x3, x3);
+        if (t3 < 0)
+        {
+            n3 = 0.0f;
+        }
+        else
+        {
+            t3 *= t3;
+            n3 = t3 * t3 * dot(
+                float4(__grad4[gi3][0], __grad4[gi3][2], __grad4[gi3][3], __grad4[gi3][3]),
+                x3
+            );
+        }
+
+        float t4 = 0.6f - dot(x4, x4);
+        if (t4 < 0)
+        {
+            n4 = 0.0f;
+        }
+        else {
+            t4 *= t4;
+            n4 = t4 * t4 * dot(
+                float4(__grad4[gi4][0], __grad4[gi4][2], __grad4[gi4][3], __grad4[gi4][3]),
+                x4
+            );
+        }
+
+        return 27.0f * (n0 + n1 + n2 + n3 + n4);
+    }
+
+
+    //
+    // Use the perlin simplex noise
+    //
+
+
+    /**
+     * fBM noise.
+     *
+     * @arg position: The position to seed the noise.
+     *
+     * @returns: The noise value in the range [-1, 1].
+     */
+    float fractalBrownianMotionNoise(const float4 &position)
+    {
+        float output = 0.0f;
+        float frequency = _lacunarity;
+        float amplitude = 1.0f;
+        float denom = 0.0f;
+        float4 translation;
+        float4 scale;
+
+        for (int octave=0; octave < _octaves; octave++)
+        {
+            const float octaveFraction = octave / _octaves;
+            scale = (
+                (_highFrequencyScale * octaveFraction)
+                + (_lowFrequencyScale * (1 - octaveFraction))
+            );       
+            translation = (
+                (_highFrequencyTranslation * octaveFraction)
+                + (_lowFrequencyTranslation * (1 - octaveFraction))
+            );
+
+            output += amplitude * perlinSimplexNoise(
+                (position * scale + translation) * frequency / _size
+            );
+
+            frequency *= _lacunarity;
+            denom += amplitude;
+            amplitude *= _gain;
+        }
+
+        return pow(output / denom, 1.0f / _gamma);
+    }
+
+
+    /**
+     * Turbulence noise.
+     *
+     * @arg position: The position to seed the noise.
+     *
+     * @returns: The noise value in the range [0, 1].
+     */
+    float turbulenceNoise(const float4 &position)
+    {
+        float output = 0.0f;
+        float frequency = _lacunarity;
+        float amplitude = 1.0f;
+        float denom = 0.0f;
+        float4 translation;
+        float4 scale;
+
+        for (int octave=0; octave < _octaves; octave++)
+        {
+            const float octaveFraction = octave / _octaves;
+            scale = (
+                (_highFrequencyScale * octaveFraction)
+                + (_lowFrequencyScale * (1 - octaveFraction))
+            );       
+            translation = (
+                (_highFrequencyTranslation * octaveFraction)
+                + (_lowFrequencyTranslation * (1 - octaveFraction))
+            );
+
+            output += fabs(
+                amplitude * perlinSimplexNoise(
+                    (position * scale + translation) * frequency / _size
+                )
+            );
+
+            frequency *= _lacunarity;
+            denom += amplitude;
+            amplitude *= _gain;
+        }
+
+        return pow(output / denom, 1.0f / _gamma);
+    }
+
 
     /**
      * Create a ray out of the camera. It will be either a standard ray,
@@ -1077,8 +953,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
         float4 resultPixel = float4(0.0f);
 
-        const float sampleRange = _depthRamp.w - _depthRamp.x;
-        const float sampleStep = sampleRange / (float) _samplesPerRay;
+        const float sampleStep = (_depthRamp.w - _depthRamp.x) / (float) _samplesPerRay;
 
         for (int path=1; path <= _raysPerPixel; path++)
         {
@@ -1125,39 +1000,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 float noiseValue = _density * ramp;
                 if (_noiseType == FBM_NOISE)
                 {
-                    noiseValue *= fractalBrownianMotionNoise(
-                        _octaves,
-                        _lacunarity,
-                        _size,
-                        _gain,
-                        _gamma,
-                        samplePosition4d,
-                        _lowFrequencyScale,
-                        _highFrequencyScale,
-                        _lowFrequencyTranslation,
-                        _highFrequencyTranslation,
-                        __simplex,
-                        __perm,
-                        __grad4
-                    );
+                    noiseValue *= fractalBrownianMotionNoise(samplePosition4d);
                 }
                 else
                 {
-                    noiseValue *= turbulenceNoise(
-                        _octaves,
-                        _lacunarity,
-                        _size,
-                        _gain,
-                        _gamma,
-                        samplePosition4d,
-                        _lowFrequencyScale,
-                        _highFrequencyScale,
-                        _lowFrequencyTranslation,
-                        _highFrequencyTranslation,
-                        __simplex,
-                        __perm,
-                        __grad4
-                    );
+                    noiseValue *= turbulenceNoise(samplePosition4d);
                 }
 
                 resultPixel += noiseValue * invertedLastSample;

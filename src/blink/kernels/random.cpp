@@ -25,43 +25,13 @@ inline float fract(const float value)
  *
  * @returns: A random value on the interval [0, 1].
  */
-inline float random(const float seed)
-{
-    return fract(sin(seed * 91.3458f) * 47453.5453f);
-}
-
-
-/**
- * Get a random value on the interval [0, 1].
- *
- * @arg seed: The random seed.
- *
- * @returns: A random value on the interval [0, 1].
- */
-inline float3 random(const float3 &seed)
-{
-    return float3(
-        random(seed.x),
-        random(seed.y),
-        random(seed.z)
-    );
-}
-
-
-/**
- * Get a random value on the interval [0, 1].
- *
- * @arg seed: The random seed.
- *
- * @returns: A random value on the interval [0, 1].
- */
 inline float4 random(const float4 &seed)
 {
     return float4(
-        random(seed.x),
-        random(seed.y),
-        random(seed.z),
-        random(seed.w)
+        fract(sin(75.19f * seed.x + 71.743f) * 7513.471f),
+        fract(sin(15.73f * seed.y + 113.591f) * 47453.553f),
+        fract(sin(7.37f * seed.z + 147.781f) * 8769.132f),
+        fract(sin(13.157f * seed.w + 71.743f) * 7513.471f)
     );
 }
 
@@ -100,8 +70,10 @@ kernel Random : ImageComputationKernel<ePixelWise>
     /**
      * Compute a random pixel value.
      */
-    void process()
+    void process(int2 pos)
     {
-        dst() = __rangeLength * random(seed()) + _inclusiveRange.x;
+        dst() = _inclusiveRange.x + __rangeLength * random(
+            seed() + float4(pos.x, pos.y, pos.x, pos.y)
+        );
     }
 };
