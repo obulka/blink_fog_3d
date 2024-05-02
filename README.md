@@ -2,8 +2,7 @@
 
 This gizmo allows you to create noise in 3D space using just a camera as input.
 
-![fog_test_evo](https://github.com/obulka/blink_fog_3d/assets/21975584/ebedbc9e-6a93-4967-a48b-3a18d8676fab)
-
+![fog_test_evo](https://github.com/obulka/blink_fog_3d/assets/21975584/13ddff0d-672f-484a-8047-f1985a0a7f00)
 
 ## Usage
 
