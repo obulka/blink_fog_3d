@@ -31,7 +31,7 @@ define_window_layout_xml {<?xml version="1.0" encoding="UTF-8"?>
 Root {
  inputs 0
  name /home/ob1/software/nuke/dev/fog/src/examples/test.nk
- frame 23
+ frame 32
  last_frame 48
  lock_range true
  format "1024 778 0 0 1024 778 1 1K_Super_35(full-ap)"
@@ -63,7 +63,7 @@ Camera3 {
  xpos 688
  ypos -150
 }
-set N927a270 [stack 0]
+set N97397b0 [stack 0]
 Group {
  name blink_fog_3d
  tile_color 0xffffffff
@@ -78,6 +78,7 @@ Group {
  density 1
  addUserKnob {19 depth_ramp l "depth ramp" t "The fog will only start being sampled at the depth specified in the first value, it will be scaled up to full density at the second value, maintain that density until the depth of the third value, and then ramp back down to the depth of the final value.\n\nYou may be familiar with this curve as the A, B, C, D values on the ramp of something like a deep colour correct. Something like:\n\n++++ B ._______________. C ++++++\n+++++ / +++++++++++ \\ ++++++\n++++ / +++++++++++++ \\ +++++\n----- A * ++++++++++++++ * D ------\n" R 0 100}
  depth_ramp {7 8 12 13}
+ addUserKnob {6 depth_ramp_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {6 depth_of_field l "depth of field" t "Enable depth of field. This will be determined by the focal distance and fstop of the input camera. Increase the rays per pixel to clean up the noise when using this." +STARTLINE}
  addUserKnob {6 latlong t "Render a latlong." -STARTLINE}
  addUserKnob {26 ""}
@@ -96,12 +97,16 @@ Group {
  gamma 0.5
  addUserKnob {19 low_frequency_scale l "low frequency scale" t "Scale the low frequencies by this amount separately from the high frequencies."}
  low_frequency_scale {1 1 1 1}
+ addUserKnob {6 low_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_scale l "high frequency scale" t "Scale the high frequencies by this amount separately from the low frequencies."}
  high_frequency_scale {1 1 1 1}
+ addUserKnob {6 high_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 low_frequency_translation l "low frequency translation" t "Translate the low frequencies by this amount separately from the high frequencies."}
  low_frequency_translation {0 0 0 0}
+ addUserKnob {6 low_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_translation l "high frequency translation" t "Translate the high frequencies by this amount separately from the low frequencies."}
  high_frequency_translation {0 0 0 0}
+ addUserKnob {6 high_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 div0 l "" +STARTLINE}
  addUserKnob {26 info l "" +STARTLINE T "v1.0.0 - (c) Owen Bulka & Riley Gray - 2024"}
 }
@@ -265,17 +270,18 @@ Group {
   ypos 1314
  }
 end_group
-push $N927a270
+push $N97397b0
 Group {
  name blink_fog_3d1
  tile_color 0xffffffff
+ selected true
  xpos 784
  ypos -19
  addUserKnob {20 User l BlinkFog3D}
  addUserKnob {3 rays_per_pixel l "rays per pixel" t "The number of rays per pixel to sample noise on. This enables antialiasing as well as cleaning up the noise from sampling depth of field."}
  rays_per_pixel 1
  addUserKnob {3 samples_per_ray l "samples per ray" t "The number of noise samples to compute per ray. Increase this to reduce flickering. I recommend setting this low, around 5-10, until you have noise that looks about like you want, then increase this number to something like 100 for the final render."}
- samples_per_ray 100
+ samples_per_ray 200
  addUserKnob {7 density t "A multiplier that increases fog density." R 0 10}
  density 0.1
  addUserKnob {19 depth_ramp l "depth ramp" t "The fog will only start being sampled at the depth specified in the first value, it will be scaled up to full density at the second value, maintain that density until the depth of the third value, and then ramp back down to the depth of the final value.\n\nYou may be familiar with this curve as the A, B, C, D values on the ramp of something like a deep colour correct. Something like:\n\n++++ B ._______________. C ++++++\n+++++ / +++++++++++ \\ ++++++\n++++ / +++++++++++++ \\ +++++\n----- A * ++++++++++++++ * D ------\n" R 0 100}
@@ -296,7 +302,7 @@ Group {
  addUserKnob {7 gain t "The per octave amplitude multiplier."}
  gain 0.5
  addUserKnob {7 gamma t "The result will be raised to 1 over this power."}
- gamma 0.43
+ gamma 0.38
  addUserKnob {19 low_frequency_scale l "low frequency scale" t "Scale the low frequencies by this amount separately from the high frequencies."}
  low_frequency_scale {1 1 1 1}
  addUserKnob {6 low_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
@@ -304,10 +310,10 @@ Group {
  high_frequency_scale {1 1 1 1}
  addUserKnob {6 high_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 low_frequency_translation l "low frequency translation" t "Translate the low frequencies by this amount separately from the high frequencies."}
- low_frequency_translation {0 0 0 {frame/35}}
+ low_frequency_translation {0 0 0 {frame/50}}
  addUserKnob {6 low_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_translation l "high frequency translation" t "Translate the high frequencies by this amount separately from the low frequencies."}
- high_frequency_translation {0 0 0 {frame/70}}
+ high_frequency_translation {0 0 0 0}
  addUserKnob {6 high_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 div0 l "" +STARTLINE}
  addUserKnob {26 info l "" +STARTLINE T "v1.0.0 - (c) Owen Bulka & Riley Gray - 2024"}
