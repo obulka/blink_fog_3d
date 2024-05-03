@@ -1,18 +1,21 @@
 Gizmo {
  inputs 2
- tile_color 0xffffffff
+ tile_color 0x3b004cff
  addUserKnob {20 User l BlinkFog3D}
+ addUserKnob {26 sampling_settings l "<b>sampling settings"}
  addUserKnob {3 rays_per_pixel l "rays per pixel" t "The number of rays per pixel to sample noise on. This enables antialiasing as well as cleaning up the noise from sampling depth of field."}
  rays_per_pixel 4
  addUserKnob {3 samples_per_ray l "samples per ray" t "The number of noise samples to compute per ray. Increase this to reduce flickering. I recommend setting this low, around 5-10, until you have noise that looks about like you want, then increase this number to something like 100 for the final render."}
- samples_per_ray 200
+ samples_per_ray 100
  addUserKnob {7 density t "A multiplier that increases fog density." R 0 10}
- density 0.3
- addUserKnob {19 depth_ramp l "depth ramp" t "The fog will only start being sampled at the depth specified in the first value, it will be scaled up to full density at the second value, maintain that density until the depth of the third value, and then ramp back down to the depth of the final value.\n\nYou may be familiar with this curve as the A, B, C, D values on the ramp of something like a deep colour correct. Something like:\n\n++++ B ._______________. C ++++++\n+++++ / +++++++++++ \\ ++++++\n++++ / +++++++++++++ \\ +++++\n----- A * ++++++++++++++ * D ------\n" R 0 100}
- depth_ramp {7 8 12 13}
+ density 1
  addUserKnob {6 depth_of_field l "depth of field" t "Enable depth of field. This will be determined by the focal distance and fstop of the input camera. Increase the rays per pixel to clean up the noise when using this." +STARTLINE}
  addUserKnob {6 latlong t "Render a latlong." -STARTLINE}
- addUserKnob {26 ""}
+ addUserKnob {26 depth_settings l "<b>depth settings"}
+ addUserKnob {20 depth_ramp_1 l "Depth Ramp" n 1}
+ addUserKnob {41 range l "depth ramp" t "The fog will only start being sampled at the depth specified in the first value, it will be scaled up to full density at the second value, maintain that density until the depth of the third value, and then ramp back down to the depth of the final value." T Keyer1.range}
+ addUserKnob {20 endGroup n -1}
+ addUserKnob {26 noise_settings l "<b>noise settings"}
  addUserKnob {7 size t "The size of the noise." R 1 300}
  size 10
  addUserKnob {4 type t "The noise type." M {turbulence fBm "" ""}}
@@ -34,9 +37,10 @@ Gizmo {
  low_frequency_translation {0 0 0 0}
  addUserKnob {19 high_frequency_translation l "high frequency translation" t "Translate the high frequencies by this amount separately from the low frequencies."}
  high_frequency_translation {0 0 0 0}
- addUserKnob {26 "" +STARTLINE}
+ addUserKnob {26 ""}
  addUserKnob {41 in l "depth channel" T shuffle.in}
  addUserKnob {6 invert_depth l "invert depth" t "Check this box to do 1/z, otherwise assumes true depth." -STARTLINE}
+ invert_depth true
  addUserKnob {41 format T format_.format}
  addUserKnob {26 div0 l "" +STARTLINE}
  addUserKnob {26 info l "" +STARTLINE T "v1.0.0 - (c) Owen Bulka & Riley Gray - 2024"}
@@ -217,7 +221,7 @@ Gizmo {
   "FogKernel_Rays Per Pixel" {{parent.rays_per_pixel}}
   FogKernel_Density {{parent.density}}
   "FogKernel_Samples Per Ray" {{parent.samples_per_ray}}
-  "FogKernel_Sample Depth Ramp" {{parent.depth_ramp} {parent.depth_ramp} {parent.depth_ramp} {parent.depth_ramp}}
+  "FogKernel_Sample Depth Ramp" {{parent.Keyer1.range.A} {parent.Keyer1.range.B} {parent.Keyer1.range.C} {parent.Keyer1.range.D}}
   FogKernel_Size {{parent.size}}
   "FogKernel_Noise Type" {{parent.type}}
   FogKernel_Translation {{-parent.translation} {-parent.translation} {-parent.translation}}
@@ -239,5 +243,13 @@ Gizmo {
   name Output1
   xpos 1755
   ypos 1314
+ }
+ Keyer {
+  inputs 0
+  operation "luminance key"
+  range {7 8 12 13}
+  name Keyer1
+  xpos 1982
+  ypos 979
  }
 end_group
