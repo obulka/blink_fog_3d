@@ -113,7 +113,7 @@ set Na5d77a0 [stack 0]
 push $Ncd5ddf0
 Group {
  inputs 2
- name blink_fog_3d
+ name blink_fog_3d1
  tile_color 0x3b004cff
  xpos 1049
  ypos -66
@@ -397,7 +397,7 @@ Viewer {
 }
 Group {
  inputs 0
- name blink_fog_3d1
+ name blink_fog_3d
  tile_color 0x3b004cff
  xpos 1457
  ypos -188
