@@ -446,7 +446,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     // the input which specifies the format, process is called once per pixel
     // in this image, which also provides random seeds
     Image<eRead, eAccessPoint, eEdgeNone> noise;
-    Image<eRead, eAccessPoint, eEdgeClamped> depthAOV;
+    Image<eRead, eAccessPoint, eEdgeNone> depthAOV;
 
     // the output image
     Image<eWrite> dst;
