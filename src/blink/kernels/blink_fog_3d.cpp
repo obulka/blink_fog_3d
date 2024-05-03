@@ -976,7 +976,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 rayDirection
             );
 
-            float depth = _depthRamp.x;
+            float depth = _depthRamp.x + random(seed0.x + seed0.y) * sampleStep;
             rayOrigin += depth * rayDirection + _translation;
 
             float invertedLastSample = 1.0f;
