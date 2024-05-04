@@ -5,10 +5,10 @@ Gizmo {
  addUserKnob {26 sampling_settings l "<b>sampling settings"}
  addUserKnob {3 rays_per_pixel l "rays per pixel" t "The number of rays per pixel to sample noise on. This enables antialiasing as well as cleaning up the noise from sampling depth of field."}
  rays_per_pixel 1
- addUserKnob {3 samples_per_ray l "samples per ray" t "The number of noise samples to compute per ray. Increase this to reduce flickering. I recommend setting this low, around 5-10, until you have noise that looks about like you want, then increase this number to something like 100 for the final render."}
- samples_per_ray 250
+ addUserKnob {3 samples_per_ray l "samples per ray" t "The number of noise samples to compute per ray. Increase this to reduce flickering/improve quality, though it will run slower with a higher value."}
+ samples_per_ray 100
  addUserKnob {7 density t "A multiplier that increases fog density." R 0 10}
- density 0.25
+ density {{50/this.samples_per_ray}}
  addUserKnob {6 depth_of_field l "depth of field" t "Enable depth of field. This will be determined by the focal distance and fstop of the input camera. Increase the rays per pixel to clean up the noise when using this." +STARTLINE}
  addUserKnob {6 latlong t "Render a latlong." -STARTLINE}
  addUserKnob {26 depth_settings l "<b>depth settings"}
@@ -21,6 +21,7 @@ Gizmo {
  addUserKnob {4 type t "The noise type." M {turbulence fBm "" ""}}
  type fBm
  addUserKnob {13 translation t "Translate the noise by this amount."}
+ translation {8 0 0}
  addUserKnob {3 octaves t "The number of different frequencies to use."}
  octaves 8
  addUserKnob {7 lacunarity t "The per octave frequency multiplier." R 1 10}
@@ -197,7 +198,7 @@ Gizmo {
  Keyer {
   inputs 0
   operation "luminance key"
-  range {2 4 12 15}
+  range {4 6 12 15}
   name Keyer1
   xpos 1982
   ypos 979

@@ -944,7 +944,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
 
     /**
-     * Compute a raymarched pixel value.
+     * Compute a noise value.
      *
      * @arg pos: The x, and y location we are currently processing.
      */
@@ -976,6 +976,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 rayDirection
             );
 
+            // Set the depth to the start of the depth ramp and add a random offset
+            // to eliminate layer lines
             float depth = _depthRamp.x + random(seed0.x + seed0.y) * sampleStep;
             rayOrigin += depth * rayDirection + _translation;
 
@@ -996,6 +998,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     rayOrigin.z,
                     0.0f
                 );
+
+                // Apply the scaling specified by the depth ramp
                 float ramp;
                 if (depth < _depthRamp.y)
                 {
@@ -1010,6 +1014,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     ramp = (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
                 }
 
+                // Compute the noise value at this position
                 float noiseValue = _density * ramp;
                 if (_noiseType == FBM_NOISE)
                 {
@@ -1020,6 +1025,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     noiseValue *= turbulenceNoise(samplePosition4d);
                 }
 
+                // Over the noise values
                 resultPixel += noiseValue * invertedLastSample;
                 invertedLastSample *= 1.0f - noiseValue;
             }
