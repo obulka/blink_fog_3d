@@ -657,17 +657,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
      * along with this program. If not, see <http://www.gnu.org/licenses/>.
      *
      * @arg seed: The seed for the noise.
-     * @arg simplex: The simplex LUT.
-     * @arg perm: The perm LUT.
-     * @arg grad4: The grad4 LUT.
      *
      * @returns: Noise value in the range [-1, 1], value of 0 on all integer
      *     coordinates.
      */
-    inline float perlinSimplexNoise(
-            const float4 &seed
-    )
-    {
+    inline float perlinSimplexNoise(const float4 &seed) {
         const float G4 = 0.138196601f;
         const float4 i = floor(seed + element_sum(seed) * 0.309016994f);
         const float4 x0 = seed - i + element_sum(i) * G4;
