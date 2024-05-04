@@ -8,3 +8,5 @@ This gizmo allows you to create noise in 3D space using just a camera as input.
 ## Usage
 
 You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to your node menu or simply open the example file to find the group node.
+
+You can also pass a depth AOV to the node to create holdouts.
