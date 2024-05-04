@@ -731,7 +731,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         {
             t0 *= t0;
             n0 = t0 * t0 * dot(
-                float4(__grad4[gi0][0], __grad4[gi0][2], __grad4[gi0][3], __grad4[gi0][3]),
+                float4(__grad4[gi0][0], __grad4[gi0][1], __grad4[gi0][2], __grad4[gi0][3]),
                 x0
             );
         }
@@ -745,7 +745,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         {
             t1 *= t1;
             n1 = t1 * t1 * dot(
-                float4(__grad4[gi1][0], __grad4[gi1][2], __grad4[gi1][3], __grad4[gi1][3]),
+                float4(__grad4[gi1][0], __grad4[gi1][1], __grad4[gi1][2], __grad4[gi1][3]),
                 x1
             );
         }
@@ -759,7 +759,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         {
             t2 *= t2;
             n2 = t2 * t2 * dot(
-                float4(__grad4[gi2][0], __grad4[gi2][2], __grad4[gi2][3], __grad4[gi2][3]),
+                float4(__grad4[gi2][0], __grad4[gi2][1], __grad4[gi2][2], __grad4[gi2][3]),
                 x2
             );
         }
@@ -773,7 +773,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         {
             t3 *= t3;
             n3 = t3 * t3 * dot(
-                float4(__grad4[gi3][0], __grad4[gi3][2], __grad4[gi3][3], __grad4[gi3][3]),
+                float4(__grad4[gi3][0], __grad4[gi3][1], __grad4[gi3][2], __grad4[gi3][3]),
                 x3
             );
         }
@@ -786,7 +786,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         else {
             t4 *= t4;
             n4 = t4 * t4 * dot(
-                float4(__grad4[gi4][0], __grad4[gi4][2], __grad4[gi4][3], __grad4[gi4][3]),
+                float4(__grad4[gi4][0], __grad4[gi4][1], __grad4[gi4][2], __grad4[gi4][3]),
                 x4
             );
         }
