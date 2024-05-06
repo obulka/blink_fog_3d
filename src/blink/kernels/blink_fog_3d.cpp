@@ -235,7 +235,7 @@ inline float2 uniformPointInUnitCircle(const float2 &seed)
  *
  * @returns: The sum of the vector elements.
  */
-inline float element_sum(const float4 &vector) {
+inline float elementSum(const float4 &vector) {
     return vector.x + vector.y + vector.z + vector.w;
 }
 
@@ -663,8 +663,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
      */
     inline float perlinSimplexNoise(const float4 &seed) {
         const float G4 = 0.138196601f;
-        const float4 i = floor(seed + element_sum(seed) * 0.309016994f);
-        const float4 x0 = seed - i + element_sum(i) * G4;
+        const float4 i = floor(seed + elementSum(seed) * 0.309016994f);
+        const float4 x0 = seed - i + elementSum(i) * G4;
 
         const int c = (
             ((x0.x > x0.y) << 5)
