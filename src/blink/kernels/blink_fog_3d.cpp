@@ -948,6 +948,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         pixelDepth = (
             pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _depthRamp.w
         );
+        const float pixelDepthAlpha = depthAOV(3);
 
         float2 pixelLocation = float2(pos.x, pos.y);
         SampleType(seeds) seedPixel = seeds();
@@ -978,10 +979,15 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             float invertedLastSample = 1.0f;
             for (int step=0; step < _samplesPerRay; step++)
             {
+                float ramp = 1.0f;
                 depth += sampleStep;
                 if (depth > pixelDepth)
                 {
-                    break;
+                    if (pixelDepthAlpha <= 0.0f)
+                    {
+                        break;
+                    }
+                    ramp *= pixelDepthAlpha;
                 }
                 rayOrigin += rayDirection * sampleStep;
 
@@ -994,18 +1000,13 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 );
 
                 // Apply the scaling specified by the depth ramp
-                float ramp;
                 if (depth < _depthRamp.y)
                 {
-                    ramp = (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
+                    ramp *= (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
                 }
-                else if (depth >= _depthRamp.y && depth <= _depthRamp.z)
+                else if (depth > _depthRamp.z)
                 {
-                    ramp = 1.0f;
-                }
-                else
-                {
-                    ramp = (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
+                    ramp *= (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
                 }
 
                 // Compute the noise value at this position
