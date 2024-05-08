@@ -948,7 +948,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         pixelDepth = (
             pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _depthRamp.w
         );
-        const float pixelDepthAlpha = depthAOV(3);
+        const float pixelDepthAlpha = 1.0f - depthAOV(3);
 
         float2 pixelLocation = float2(pos.x, pos.y);
         SampleType(seeds) seedPixel = seeds();
