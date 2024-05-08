@@ -1008,6 +1008,6 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             noiseValue *= turbulenceNoise(samplePosition4d);
         }
 
-        dst() = float4(noiseValue) / float(_raysPerPixel);
+        dst() = float4(noiseValue);
     }
 };
