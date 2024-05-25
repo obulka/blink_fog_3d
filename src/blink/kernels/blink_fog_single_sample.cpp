@@ -947,7 +947,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         SampleType(seeds) seedPixel = seeds();
         float2 seed = float2(seedPixel.x, seedPixel.y) + RAND_CONST_0 * pixelLocation;
 
-        float4 resultPixel;
+        float4 resultPixel = float4(0.0f);
 
         const float sampleStep = (_depthRamp.w - _depthRamp.x) / (float) _samplesPerRay;
 
@@ -963,7 +963,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
         // Set the depth to the start of the depth ramp and add a random offset
         // to eliminate layer lines
-        float depth = _depthRamp.x + random(seed.x + seed.y + _individualSample) * sampleStep;
+        float depth = _depthRamp.x - random(seed.x + seed.y + _individualSample) * sampleStep;
         rayOrigin += depth * rayDirection + _translation;
 
         depth += (1.0f + _individualSample) * sampleStep;

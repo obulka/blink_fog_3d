@@ -973,7 +973,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
             // Set the depth to the start of the depth ramp and add a random offset
             // to eliminate layer lines
-            float depth = _depthRamp.x + random(seed0.x + seed0.y) * sampleStep;
+            float depth = _depthRamp.x - random(seed0.x + seed0.y) * sampleStep;
             rayOrigin += depth * rayDirection + _translation;
 
             float invertedLastSample = 1.0f;
