@@ -11,3 +11,13 @@ blink_fog_3d is a tool for rendering 4d noise through a render camera with lots 
 You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to your node menu or simply open the example file to find the group node.
 
 You can also pass a depth AOV to the node to create holdouts.
+
+### New in Version 1.2.0
+
+- Deep support!
+  - Use the `holdout mode` `deep (proxy)` for fast deep that will work for most scenarios, but can have artifacts
+  - Use the `holdout mode` `deep (full)` for slower but completely accurate deep
+  - Use the `output deep` checkbox to output deep data without holdouts
+ 
+- Overscan
+  - Use the `overscan` knob to specify any overscan
