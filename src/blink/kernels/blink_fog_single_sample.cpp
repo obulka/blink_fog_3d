@@ -179,11 +179,6 @@ inline void rotationFromWorldMatrix(const float4x4 &worldMatrix, float3x3 &rotat
 
 // Some random constants on the interval [1, 2]
 #define RAND_CONST_0 1.571411510193971f
-#define RAND_CONST_1 1.268632820084931f
-#define RAND_CONST_2 1.7880365647937733f
-#define RAND_CONST_3 1.3546987471558234f
-#define RAND_CONST_4 1.4365958250848703f
-#define RAND_CONST_5 1.7045380669435368f
 
 
 /**
@@ -468,11 +463,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         // Image params
         float _formatWidth;
         float _formatHeight;
-        int _raysPerPixel;
         float _individualSample;
         float _density;
         int _samplesPerRay;
         float4 _depthRamp;
+        bool _secondSample;
 
         // Noise Parameters
         float _size;
@@ -526,9 +521,9 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_formatWidth, "Screen Width", 3840.0f);
         defineParam(_individualSample, "Individual Sample", 0.0f);
         defineParam(_density, "Density", 1.0f);
-        defineParam(_raysPerPixel, "Rays Per Pixel", 1);
         defineParam(_samplesPerRay, "Samples Per Ray", 5);
         defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_secondSample, "Do Second Sample", false);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -950,7 +945,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     {
         float2 pixelLocation = float2(pos.x, pos.y);
         SampleType(seeds) seedPixel = seeds();
-        float2 seed0 = float2(seedPixel.x, seedPixel.y) + RAND_CONST_0 * pixelLocation;
+        float2 seed = float2(seedPixel.x, seedPixel.y) + RAND_CONST_0 * pixelLocation;
 
         float4 resultPixel;
 
@@ -960,7 +955,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float3 rayOrigin;
         float3 rayDirection;
         getCameraRay(
-            seed0,
+            seed,
             pixelLocation,
             rayOrigin,
             rayDirection
@@ -968,46 +963,54 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
         // Set the depth to the start of the depth ramp and add a random offset
         // to eliminate layer lines
-        float depth = _depthRamp.x;
+        float depth = _depthRamp.x + random(seed.x + seed.y + _individualSample) * sampleStep;
         rayOrigin += depth * rayDirection + _translation;
 
-        depth += _individualSample * sampleStep;
-        rayOrigin += _individualSample * rayDirection * sampleStep;
+        depth += (1.0f + _individualSample) * sampleStep;
+        rayOrigin += (1.0f + _individualSample) * rayDirection * sampleStep;
+        for (int sample=0; sample <= (int) _secondSample; sample++)
+        {
+            // Get the noise value based on which type of noise we are using
+            const float4 samplePosition4d = float4(
+                rayOrigin.x,
+                rayOrigin.y,
+                rayOrigin.z,
+                0.0f
+            );
 
-        // Get the noise value based on which type of noise we are using
-        const float4 samplePosition4d = float4(
-            rayOrigin.x,
-            rayOrigin.y,
-            rayOrigin.z,
-            0.0f
-        );
+            // Apply the scaling specified by the depth ramp
+            float ramp;
+            if (depth < _depthRamp.y)
+            {
+                ramp = (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
+            }
+            else if (depth >= _depthRamp.y && depth <= _depthRamp.z)
+            {
+                ramp = 1.0f;
+            }
+            else
+            {
+                ramp = (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
+            }
 
-        // Apply the scaling specified by the depth ramp
-        float ramp;
-        if (depth < _depthRamp.y)
-        {
-            ramp = (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
-        }
-        else if (depth >= _depthRamp.y && depth <= _depthRamp.z)
-        {
-            ramp = 1.0f;
-        }
-        else
-        {
-            ramp = (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
+            // Compute the noise value at this position
+            float noiseValue = _density * ramp;
+            if (_noiseType == FBM_NOISE)
+            {
+                noiseValue *= fractalBrownianMotionNoise(samplePosition4d);
+            }
+            else
+            {
+                noiseValue *= turbulenceNoise(samplePosition4d);
+            }
+
+            resultPixel[sample * 2] = noiseValue;
+            resultPixel[sample * 2 + 1] = depth;
+
+            depth += sampleStep;
+            rayOrigin += rayDirection * sampleStep;
         }
 
-        // Compute the noise value at this position
-        float noiseValue = _density * ramp;
-        if (_noiseType == FBM_NOISE)
-        {
-            noiseValue *= fractalBrownianMotionNoise(samplePosition4d);
-        }
-        else
-        {
-            noiseValue *= turbulenceNoise(samplePosition4d);
-        }
-
-        dst() = float4(noiseValue);
+        dst() = resultPixel;
     }
 };
