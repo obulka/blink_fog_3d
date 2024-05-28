@@ -12,6 +12,10 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 1.3.0
+
+- Seaprate deep holdout input because nuke does not like mixing deep and 2d data
+
 ### New in Version 1.2.0
 
 - Deep support!
