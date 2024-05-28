@@ -59,13 +59,12 @@ Gizmo {
  addUserKnob {26 ""}
  addUserKnob {41 from0 l "depth channel" T Copy1.from0}
  addUserKnob {6 invert_depth l "invert depth" t "Check this box to do 1/z, otherwise assumes true depth." -STARTLINE}
- invert_depth true
  addUserKnob {6 output_deep l "output deep (slow)" t "Output deep data, this will be slow." +STARTLINE}
  addUserKnob {26 ""}
  addUserKnob {41 format T format_.format}
  addUserKnob {3 overscan}
  addUserKnob {26 div0 l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "v1.2.0 - (c) Owen Bulka & Riley Gray - 2024"}
+ addUserKnob {26 info l "" +STARTLINE T "v1.3.0 - (c) Owen Bulka & Riley Gray - 2024"}
 }
  Keyer {
   inputs 0
@@ -152,13 +151,13 @@ Gizmo {
   xpos 1790
   ypos 1114
  }
-set Nbcf9e50 [stack 0]
+set N9b36360 [stack 0]
  Dot {
   name Dot3
   xpos 1925
   ypos 1114
  }
-set Nbcfeeb0 [stack 0]
+set N9c66ed0 [stack 0]
  Dot {
   name Dot11
   xpos 2114
@@ -271,7 +270,7 @@ set Nbcfeeb0 [stack 0]
   xpos 2114
   ypos 1391
  }
-set Nbdaf1a0 [stack 0]
+set N9bb1740 [stack 0]
  Dot {
   name Dot17
   xpos 2243
@@ -294,13 +293,13 @@ set Nbdaf1a0 [stack 0]
   xpos 1161
   ypos 744
  }
-set Nbdc2d90 [stack 0]
+set N9c14e90 [stack 0]
  Dot {
   name Dot6
   xpos 998
   ypos 744
  }
-set Nbdc7ce0 [stack 0]
+set N9c19de0 [stack 0]
  Dot {
   name Dot12
   xpos 795
@@ -311,7 +310,7 @@ set Nbdc7ce0 [stack 0]
   xpos 795
   ypos 1475
  }
-push $Nbdaf1a0
+push $N9bb1740
  DeepMerge2 {
   inputs 2
   operation holdout
@@ -329,7 +328,7 @@ push $Nbdaf1a0
   xpos 2114
   ypos 1588
  }
-push $Nbdc7ce0
+push $N9c19de0
  DeepCrop {
   use_znear false
   zfar {{parent.Keyer1.range.A}}
@@ -363,7 +362,7 @@ push $Nbdc7ce0
   xpos 998
   ypos 1360
  }
-push $Nbdc2d90
+push $N9c14e90
  DeepCrop {
   znear {{parent.Keyer1.range.A}}
   zfar {{parent.Keyer1.range.D}}
@@ -430,7 +429,7 @@ push $Nbdc2d90
   xpos 1453
   ypos 744
  }
-set Nbe7a690 [stack 0]
+set Na108fd0 [stack 0]
  Dot {
   name Dot10
   xpos 1357
@@ -441,7 +440,7 @@ set Nbe7a690 [stack 0]
   xpos 1357
   ypos 862
  }
-push $Nbe7a690
+push $Na108fd0
  Expression {
   expr1 0
   expr2 0
@@ -497,7 +496,7 @@ push $Nbe7a690
   xpos 1453
   ypos 1158
  }
-push $Nbcf9e50
+push $N9b36360
  BlinkScript {
   inputs 2
   kernelSourceFile /home/ob1/software/nuke/dev/fog/src/blink/kernels/blink_fog_3d.cpp
@@ -543,7 +542,7 @@ push $Nbcf9e50
   xpos 1756
   ypos 1149
  }
-push $Nbcfeeb0
+push $N9c66ed0
  BlinkScript {
   kernelSourceFile /home/ob1/software/nuke/dev/fog/src/blink/kernels/blink_fog_3d_no_depth.cpp
   recompileCount 137

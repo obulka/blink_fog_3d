@@ -33,7 +33,7 @@ Dot {
  xpos 296
  ypos -75
 }
-set Na6f3c00 [stack 0]
+set Na1137d0 [stack 0]
 CheckerBoard2 {
  inputs 0
  name CheckerBoard2
@@ -45,7 +45,7 @@ Dot {
  xpos 349
  ypos -224
 }
-set Nba971b0 [stack 0]
+set Na12e260 [stack 0]
 Sphere {
  translate {{curve x1 -1 x20 2} 0 -3}
  uniform_scale 0.5
@@ -53,7 +53,7 @@ Sphere {
  xpos 315
  ypos -177
 }
-push $Nba971b0
+push $Na12e260
 Sphere {
  translate {{curve x1 -1 x20 2} 0 0}
  name Sphere1
@@ -84,14 +84,14 @@ Dot {
  xpos 464
  ypos -4
 }
-set Nbaea410 [stack 0]
+set Na0ad140 [stack 0]
 Dot {
  name Dot1
  xpos 382
  ypos 54
 }
-push $Nbaea410
-push $Na6f3c00
+push $Na0ad140
+push $Na1137d0
 Dot {
  name Dot7
  xpos 296
@@ -167,7 +167,7 @@ Group {
  addUserKnob {41 format T format_.format}
  addUserKnob {3 overscan}
  addUserKnob {26 div0 l "" +STARTLINE}
- addUserKnob {26 info l "" +STARTLINE T "v1.2.0 - (c) Owen Bulka & Riley Gray - 2024"}
+ addUserKnob {26 info l "" +STARTLINE T "v1.3.0 - (c) Owen Bulka & Riley Gray - 2024"}
 }
  Keyer {
   inputs 0
@@ -254,13 +254,13 @@ Group {
   xpos 1790
   ypos 1114
  }
-set Nbcf9e50 [stack 0]
+set Na2c4060 [stack 0]
  Dot {
   name Dot3
   xpos 1925
   ypos 1114
  }
-set Nbcfeeb0 [stack 0]
+set N9fb66b0 [stack 0]
  Dot {
   name Dot11
   xpos 2114
@@ -373,7 +373,7 @@ set Nbcfeeb0 [stack 0]
   xpos 2114
   ypos 1391
  }
-set Nbdaf1a0 [stack 0]
+set N9d158a0 [stack 0]
  Dot {
   name Dot17
   xpos 2243
@@ -396,13 +396,13 @@ set Nbdaf1a0 [stack 0]
   xpos 1161
   ypos 744
  }
-set Nbdc2d90 [stack 0]
+set N9d293a0 [stack 0]
  Dot {
   name Dot6
   xpos 998
   ypos 744
  }
-set Nbdc7ce0 [stack 0]
+set N9d2e2c0 [stack 0]
  Dot {
   name Dot12
   xpos 795
@@ -413,7 +413,7 @@ set Nbdc7ce0 [stack 0]
   xpos 795
   ypos 1475
  }
-push $Nbdaf1a0
+push $N9d158a0
  DeepMerge2 {
   inputs 2
   operation holdout
@@ -431,7 +431,7 @@ push $Nbdaf1a0
   xpos 2114
   ypos 1588
  }
-push $Nbdc7ce0
+push $N9d2e2c0
  DeepCrop {
   use_znear false
   zfar {{parent.Keyer1.range.A}}
@@ -465,7 +465,7 @@ push $Nbdc7ce0
   xpos 998
   ypos 1360
  }
-push $Nbdc2d90
+push $N9d293a0
  DeepCrop {
   znear {{parent.Keyer1.range.A}}
   zfar {{parent.Keyer1.range.D}}
@@ -532,7 +532,7 @@ push $Nbdc2d90
   xpos 1453
   ypos 744
  }
-set Nbe7a690 [stack 0]
+set Na524040 [stack 0]
  Dot {
   name Dot10
   xpos 1357
@@ -543,7 +543,7 @@ set Nbe7a690 [stack 0]
   xpos 1357
   ypos 862
  }
-push $Nbe7a690
+push $Na524040
  Expression {
   expr1 0
   expr2 0
@@ -599,7 +599,7 @@ push $Nbe7a690
   xpos 1453
   ypos 1158
  }
-push $Nbcf9e50
+push $Na2c4060
  BlinkScript {
   inputs 2
   kernelSourceFile /home/ob1/software/nuke/dev/fog/src/blink/kernels/blink_fog_3d.cpp
@@ -645,7 +645,7 @@ push $Nbcf9e50
   xpos 1756
   ypos 1149
  }
-push $Nbcfeeb0
+push $N9fb66b0
  BlinkScript {
   kernelSourceFile /home/ob1/software/nuke/dev/fog/src/blink/kernels/blink_fog_3d_no_depth.cpp
   recompileCount 137
