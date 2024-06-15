@@ -33,7 +33,7 @@ Dot {
  xpos 296
  ypos -75
 }
-set Na1137d0 [stack 0]
+set N813bcc0 [stack 0]
 CheckerBoard2 {
  inputs 0
  name CheckerBoard2
@@ -45,7 +45,7 @@ Dot {
  xpos 349
  ypos -224
 }
-set Na12e260 [stack 0]
+set N833d1e0 [stack 0]
 Sphere {
  translate {{curve x1 -1 x20 2} 0 -3}
  uniform_scale 0.5
@@ -53,7 +53,7 @@ Sphere {
  xpos 315
  ypos -177
 }
-push $Na12e260
+push $N833d1e0
 Sphere {
  translate {{curve x1 -1 x20 2} 0 0}
  name Sphere1
@@ -84,14 +84,14 @@ Dot {
  xpos 464
  ypos -4
 }
-set Na0ad140 [stack 0]
+set N824eb60 [stack 0]
 Dot {
  name Dot1
  xpos 382
  ypos 54
 }
-push $Na0ad140
-push $Na1137d0
+push $N824eb60
+push $N813bcc0
 Dot {
  name Dot7
  xpos 296
@@ -143,18 +143,24 @@ Group {
  addUserKnob {26 spacer_0 l "" +STARTLINE T " "}
  addUserKnob {19 low_frequency_scale l "low freq scale" t "Scale the low frequencies by this amount separately from the high frequencies."}
  low_frequency_scale {1 1 1 1}
+ addUserKnob {6 low_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_scale l "high freq scale" t "Scale the high frequencies by this amount separately from the low frequencies."}
  high_frequency_scale {1 1 1 1}
+ addUserKnob {6 high_frequency_scale_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 spacer l "" +STARTLINE T " "}
  addUserKnob {19 low_frequency_translation l "low freq translation" t "Translate the low frequencies by this amount separately from the high frequencies."}
  low_frequency_translation {0 0 0 0}
+ addUserKnob {6 low_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_translation l "high freq translation" t "Translate the high frequencies by this amount separately from the low frequencies."}
  high_frequency_translation {0 0 0 0}
+ addUserKnob {6 high_frequency_translation_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 spacer_ l "" +STARTLINE T " "}
  addUserKnob {19 low_frequency_evolve l "low freq evolve" t "Evolve the low frequency over time."}
  low_frequency_evolve {0 0 0 0}
+ addUserKnob {6 low_frequency_evolve_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {19 high_frequency_evolve l "high freq evolve" t "Evolve the high frequency over time."}
  high_frequency_evolve {0 0 0 0}
+ addUserKnob {6 high_frequency_evolve_panelDropped l "panel dropped state" -STARTLINE +HIDDEN}
  addUserKnob {26 spacer_2 l "" +STARTLINE T " "}
  addUserKnob {26 holdout_settings l "<b>holdout settings"}
  addUserKnob {4 holdout_mode l "holdout mode" M {depth "deep (proxy)" "deep (full)"}}
@@ -176,6 +182,55 @@ Group {
   name Keyer1
   xpos 1982
   ypos 784
+ }
+ Input {
+  inputs 0
+  name camera
+  xpos 1620
+  ypos 894
+ }
+ Camera {
+  projection_mode {{"\[expression \[value the_cam]projection_mode(\[value the_frame])]"}}
+  focal {{"\[expression \[value the_cam]focal(\[value the_frame])]"}}
+  haperture {{"\[expression \[value the_cam]haperture(\[value the_frame])]"}}
+  vaperture {{"\[expression \[value the_cam]vaperture(\[value the_frame])]"}}
+  near {{"\[expression \[value the_cam]near(\[value the_frame])]"}}
+  far {{"\[expression \[value the_cam]far(\[value the_frame])]"}}
+  win_translate {{"\[expression \[value the_cam]win_translate.u(\[value the_frame])]"} {"\[expression \[value the_cam]win_translate.v(\[value the_frame])]"}}
+  win_scale {{"\[expression \[value the_cam]win_scale.u(\[value the_frame])]"} {"\[expression \[value the_cam]win_scale.v(\[value the_frame])]"}}
+  winroll {{"\[expression \[value the_cam]winroll(\[value the_frame])]"}}
+  focal_point {{"\[expression \[value the_cam]focal_point(\[value the_frame])]"}}
+  fstop {{"\[expression \[value the_cam]fstop(\[value the_frame])]"}}
+  name DummyCam
+  help "DummyCam by Adrian Pueyo\n\nCamera that apart from the matrices also grabs all the \"Projection\" values from the upstream camera that it's connected to. Turns into a default Camera if no Camera connected. Can also be used inside of groups and gizmos, as many levels deep as you want :D All using live and super fast TCL.\n\nUpdated v1.1: Now grabs the correct frame too (thanks Erwan Leroy for the idea).\n\nUpdated v1.3: Now accepts Nuke13's Camera3\n\nadrianpueyo.com, 2019-2021"
+  onCreate "n = nuke.thisNode()\nfor k in \[\"projection_mode\",\"focal\",\"haperture\",\"vaperture\",\"near\",\"far\",\"win_translate\",\"win_scale\",\"winroll\",\"focal_point\",\"fstop\"]:\n    n\[k].setFlag(0x0000000010000000)"
+  xpos 1630
+  ypos 994
+  addUserKnob {20 DummyCam l Defaults}
+  addUserKnob {43 the_cam +INVISIBLE}
+  the_cam "\[\n#DummyCam v1.3 - Updated 5 May 2021.\nset starting_point \"this.input0\"\nset default \"this.d_\"\n\n# If cam has no inputs, return the default.\nif \{\[exists \$starting_point]\} \{\n    set x \[node \$starting_point]\n\} \{ \n    return \$default\n\}\n\nset finished 0\nwhile \{\$finished != 1\} \{\n\n    # First look for a Cam or Input or topnode.\n    while \{\[class \$x] != \"Camera4\" && \[class \$x] != \"Camera3\" && \[class \$x] != \"Camera2\" && \[class \$x] != \"Camera\" && \[class \$x] != \"Input\" && \$x != \[topnode \$x]\} \{\n        set x \[node \$x.input0]\n    \}\n\n    # Then, check if node is a cam (and return), and otherwise, if it's an input, see if the parent exists and move to it.\n    if \{\[class \$x]==\"Camera4\"||\[class \$x]==\"Camera3\"||\[class \$x]==\"Camera2\"||\[class \$x]==\"Camera\"\} \{\n        set x \[append x \".\"]\n        return \$x\n    \} \{ \n        if \{ \[class \$x]==\"Input\" \} \{ \n            set inp \"\$x.parent.input\"\n            set inputNum \[value \$x.number]\n            set inp \[append inp \$inputNum]\n            if \{ \[exists \$inp] \} \{\n                set x \[node \$inp]\n            \} \{ \n                set finished 1\n            \}\n        \} \{ \n            set finished 1\n        \}\n    \}\n\}\nreturn \$default\n]"
+  addUserKnob {43 the_frame +INVISIBLE}
+  the_frame "\[\nset the_camera \[string trimright \[value the_cam] .]\nif \{\[exists \$the_camera]\} \{\n    return \[value \$the_camera.frame]\n\} \{ \n    return \[frame]\n\}\n]"
+  addUserKnob {4 d_projection_mode l projection M {perspective orthographic uv spherical ""}}
+  addUserKnob {7 d_focal l "focal length" R 0 100}
+  d_focal 50
+  addUserKnob {7 d_haperture l "horiz aperture" R 0 50}
+  d_haperture 24.576
+  addUserKnob {7 d_vaperture l "vert aperture" R 0 50}
+  d_vaperture 18.672
+  addUserKnob {7 d_near l near R 0 10}
+  d_near 0.1
+  addUserKnob {7 d_far l far R 0 10000}
+  d_far 10000
+  addUserKnob {30 d_win_translate l "window translate"}
+  addUserKnob {30 d_win_scale l "window scale"}
+  d_win_scale {1 1}
+  addUserKnob {7 d_winroll l "window roll" R 0 45}
+  addUserKnob {7 d_focal_point l "focal distance" R 0 10}
+  d_focal_point 2
+  addUserKnob {7 d_fstop l fstop R 0 30}
+  d_fstop 16
+  addUserKnob {26 version l " " t "Updated 5 May 2021" T "<span style=\"color:#666\"><br/><b>DummyCam v1.3</b> - <a href=\"http://www.adrianpueyo.com\" style=\"color:#666;text-decoration: none;\">adrianpueyo.com</a>, 2019-2021</span>"}
  }
  Constant {
   inputs 0
@@ -254,13 +309,13 @@ Group {
   xpos 1790
   ypos 1114
  }
-set Na2c4060 [stack 0]
+set N8690b00 [stack 0]
  Dot {
   name Dot3
   xpos 1925
   ypos 1114
  }
-set N9fb66b0 [stack 0]
+set N8559ba0 [stack 0]
  Dot {
   name Dot11
   xpos 2114
@@ -314,7 +369,6 @@ set N9fb66b0 [stack 0]
  Group {
   name deep_blender
   knobChanged "\n"
-  selected true
   xpos 2080
   ypos 1264
   addUserKnob {20 User}
@@ -373,7 +427,7 @@ set N9fb66b0 [stack 0]
   xpos 2114
   ypos 1391
  }
-set N9d158a0 [stack 0]
+set N9401d80 [stack 0]
  Dot {
   name Dot17
   xpos 2243
@@ -396,13 +450,13 @@ set N9d158a0 [stack 0]
   xpos 1161
   ypos 744
  }
-set N9d293a0 [stack 0]
+set N94158e0 [stack 0]
  Dot {
   name Dot6
   xpos 998
   ypos 744
  }
-set N9d2e2c0 [stack 0]
+set N941a780 [stack 0]
  Dot {
   name Dot12
   xpos 795
@@ -413,7 +467,7 @@ set N9d2e2c0 [stack 0]
   xpos 795
   ypos 1475
  }
-push $N9d158a0
+push $N9401d80
  DeepMerge2 {
   inputs 2
   operation holdout
@@ -431,7 +485,7 @@ push $N9d158a0
   xpos 2114
   ypos 1588
  }
-push $N9d2e2c0
+push $N941a780
  DeepCrop {
   use_znear false
   zfar {{parent.Keyer1.range.A}}
@@ -465,7 +519,7 @@ push $N9d2e2c0
   xpos 998
   ypos 1360
  }
-push $N9d293a0
+push $N94158e0
  DeepCrop {
   znear {{parent.Keyer1.range.A}}
   zfar {{parent.Keyer1.range.D}}
@@ -532,7 +586,7 @@ push $N9d293a0
   xpos 1453
   ypos 744
  }
-set Na524040 [stack 0]
+set N8001240 [stack 0]
  Dot {
   name Dot10
   xpos 1357
@@ -543,7 +597,7 @@ set Na524040 [stack 0]
   xpos 1357
   ypos 862
  }
-push $Na524040
+push $N8001240
  Expression {
   expr1 0
   expr2 0
@@ -599,7 +653,7 @@ push $Na524040
   xpos 1453
   ypos 1158
  }
-push $Na2c4060
+push $N8690b00
  BlinkScript {
   inputs 2
   kernelSourceFile /home/ob1/software/nuke/dev/fog/src/blink/kernels/blink_fog_3d.cpp
@@ -645,7 +699,7 @@ push $Na2c4060
   xpos 1756
   ypos 1149
  }
-push $N9fb66b0
+push $N8559ba0
  BlinkScript {
   kernelSourceFile /home/ob1/software/nuke/dev/fog/src/blink/kernels/blink_fog_3d_no_depth.cpp
   recompileCount 137
@@ -692,7 +746,7 @@ push $N9fb66b0
  }
  Switch {
   inputs 2
-  which {{"\[exists parent.input1]"}}
+  which {{"\[exists parent.input1] || \[exists parent.input2]"}}
   name Switch1
   xpos 1891
   ypos 1227
@@ -733,55 +787,6 @@ push $N9fb66b0
   name Output1
   xpos 1891
   ypos 1700
- }
- Input {
-  inputs 0
-  name camera
-  xpos 1620
-  ypos 894
- }
- Camera {
-  projection_mode {{"\[expression \[value the_cam]projection_mode(\[value the_frame])]"}}
-  focal {{"\[expression \[value the_cam]focal(\[value the_frame])]"}}
-  haperture {{"\[expression \[value the_cam]haperture(\[value the_frame])]"}}
-  vaperture {{"\[expression \[value the_cam]vaperture(\[value the_frame])]"}}
-  near {{"\[expression \[value the_cam]near(\[value the_frame])]"}}
-  far {{"\[expression \[value the_cam]far(\[value the_frame])]"}}
-  win_translate {{"\[expression \[value the_cam]win_translate.u(\[value the_frame])]"} {"\[expression \[value the_cam]win_translate.v(\[value the_frame])]"}}
-  win_scale {{"\[expression \[value the_cam]win_scale.u(\[value the_frame])]"} {"\[expression \[value the_cam]win_scale.v(\[value the_frame])]"}}
-  winroll {{"\[expression \[value the_cam]winroll(\[value the_frame])]"}}
-  focal_point {{"\[expression \[value the_cam]focal_point(\[value the_frame])]"}}
-  fstop {{"\[expression \[value the_cam]fstop(\[value the_frame])]"}}
-  name DummyCam
-  help "DummyCam by Adrian Pueyo\n\nCamera that apart from the matrices also grabs all the \"Projection\" values from the upstream camera that it's connected to. Turns into a default Camera if no Camera connected. Can also be used inside of groups and gizmos, as many levels deep as you want :D All using live and super fast TCL.\n\nUpdated v1.1: Now grabs the correct frame too (thanks Erwan Leroy for the idea).\n\nUpdated v1.3: Now accepts Nuke13's Camera3\n\nadrianpueyo.com, 2019-2021"
-  onCreate "n = nuke.thisNode()\nfor k in \[\"projection_mode\",\"focal\",\"haperture\",\"vaperture\",\"near\",\"far\",\"win_translate\",\"win_scale\",\"winroll\",\"focal_point\",\"fstop\"]:\n    n\[k].setFlag(0x0000000010000000)"
-  xpos 1630
-  ypos 994
-  addUserKnob {20 DummyCam l Defaults}
-  addUserKnob {43 the_cam +INVISIBLE}
-  the_cam "\[\n#DummyCam v1.3 - Updated 5 May 2021.\nset starting_point \"this.input0\"\nset default \"this.d_\"\n\n# If cam has no inputs, return the default.\nif \{\[exists \$starting_point]\} \{\n    set x \[node \$starting_point]\n\} \{ \n    return \$default\n\}\n\nset finished 0\nwhile \{\$finished != 1\} \{\n\n    # First look for a Cam or Input or topnode.\n    while \{\[class \$x] != \"Camera4\" && \[class \$x] != \"Camera3\" && \[class \$x] != \"Camera2\" && \[class \$x] != \"Camera\" && \[class \$x] != \"Input\" && \$x != \[topnode \$x]\} \{\n        set x \[node \$x.input0]\n    \}\n\n    # Then, check if node is a cam (and return), and otherwise, if it's an input, see if the parent exists and move to it.\n    if \{\[class \$x]==\"Camera4\"||\[class \$x]==\"Camera3\"||\[class \$x]==\"Camera2\"||\[class \$x]==\"Camera\"\} \{\n        set x \[append x \".\"]\n        return \$x\n    \} \{ \n        if \{ \[class \$x]==\"Input\" \} \{ \n            set inp \"\$x.parent.input\"\n            set inputNum \[value \$x.number]\n            set inp \[append inp \$inputNum]\n            if \{ \[exists \$inp] \} \{\n                set x \[node \$inp]\n            \} \{ \n                set finished 1\n            \}\n        \} \{ \n            set finished 1\n        \}\n    \}\n\}\nreturn \$default\n]"
-  addUserKnob {43 the_frame +INVISIBLE}
-  the_frame "\[\nset the_camera \[string trimright \[value the_cam] .]\nif \{\[exists \$the_camera]\} \{\n    return \[value \$the_camera.frame]\n\} \{ \n    return \[frame]\n\}\n]"
-  addUserKnob {4 d_projection_mode l projection M {perspective orthographic uv spherical ""}}
-  addUserKnob {7 d_focal l "focal length" R 0 100}
-  d_focal 50
-  addUserKnob {7 d_haperture l "horiz aperture" R 0 50}
-  d_haperture 24.576
-  addUserKnob {7 d_vaperture l "vert aperture" R 0 50}
-  d_vaperture 18.672
-  addUserKnob {7 d_near l near R 0 10}
-  d_near 0.1
-  addUserKnob {7 d_far l far R 0 10000}
-  d_far 10000
-  addUserKnob {30 d_win_translate l "window translate"}
-  addUserKnob {30 d_win_scale l "window scale"}
-  d_win_scale {1 1}
-  addUserKnob {7 d_winroll l "window roll" R 0 45}
-  addUserKnob {7 d_focal_point l "focal distance" R 0 10}
-  d_focal_point 2
-  addUserKnob {7 d_fstop l fstop R 0 30}
-  d_fstop 16
-  addUserKnob {26 version l " " t "Updated 5 May 2021" T "<span style=\"color:#666\"><br/><b>DummyCam v1.3</b> - <a href=\"http://www.adrianpueyo.com\" style=\"color:#666;text-decoration: none;\">adrianpueyo.com</a>, 2019-2021</span>"}
  }
 end_group
 Dot {
