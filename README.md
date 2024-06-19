@@ -12,6 +12,10 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 1.4.0
+
+- Added a `y ramp` knob to vary the noise density along the y-axis in worldspace
+
 ### New in Version 1.3.0
 
 - Separate deep holdout input because nuke does not like mixing deep and 2d data
