@@ -473,6 +473,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _density;
         int _samplesPerRay;
         float4 _depthRamp;
+        float4 _yRamp;
+        bool _enableYRamp;
 
         // Noise Parameters
         float _size;
@@ -530,6 +532,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_raysPerPixel, "Rays Per Pixel", 1);
         defineParam(_samplesPerRay, "Samples Per Ray", 5);
         defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_yRamp, "Sample Y Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enableYRamp, "Enable Y Ramp", false);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -998,6 +1002,24 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     rayOrigin.z,
                     0.0f
                 );
+
+                // Apply the scaling specified by the y ramp
+                if (_enableYRamp)
+                {
+                    const float yPosition = samplePosition4d.y;
+                    if (yPosition <= _yRamp.x || yPosition >= _yRamp.w)
+                    {
+                        continue;
+                    }
+                    else if (yPosition < _yRamp.y)
+                    {
+                        ramp *= (yPosition - _yRamp.y) / (_yRamp.y - _yRamp.x) + 1.0f;
+                    }
+                    else if (yPosition > _yRamp.z)
+                    {
+                        ramp *= (_yRamp.w - yPosition) / (_yRamp.w - _yRamp.z);
+                    }
+                }
 
                 // Apply the scaling specified by the depth ramp
                 if (depth < _depthRamp.y)

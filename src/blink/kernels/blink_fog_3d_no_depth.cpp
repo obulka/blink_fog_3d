@@ -472,6 +472,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _density;
         int _samplesPerRay;
         float4 _depthRamp;
+        float4 _yRamp;
+        bool _enableYRamp;
 
         // Noise Parameters
         float _size;
@@ -527,6 +529,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_raysPerPixel, "Rays Per Pixel", 1);
         defineParam(_samplesPerRay, "Samples Per Ray", 5);
         defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_yRamp, "Sample Y Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enableYRamp, "Enable Y Ramp", false);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -986,23 +990,38 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     0.0f
                 );
 
+                // Apply the scaling specified by the y ramp
+                float yRamp = 1.0f;
+                if (_enableYRamp)
+                {
+                    const float yPosition = samplePosition4d.y;
+                    if (yPosition <= _yRamp.x || yPosition >= _yRamp.w)
+                    {
+                        continue;
+                    }
+                    else if (yPosition < _yRamp.y)
+                    {
+                        yRamp = (yPosition - _yRamp.y) / (_yRamp.y - _yRamp.x) + 1.0f;
+                    }
+                    else if (yPosition > _yRamp.z)
+                    {
+                        yRamp = (_yRamp.w - yPosition) / (_yRamp.w - _yRamp.z);
+                    }
+                }
+
                 // Apply the scaling specified by the depth ramp
-                float ramp;
+                float depthRamp = 1.0f;
                 if (depth < _depthRamp.y)
                 {
-                    ramp = (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
+                    depthRamp = (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
                 }
-                else if (depth >= _depthRamp.y && depth <= _depthRamp.z)
+                else if (depth > _depthRamp.z)
                 {
-                    ramp = 1.0f;
-                }
-                else
-                {
-                    ramp = (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
+                    depthRamp = (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
                 }
 
                 // Compute the noise value at this position
-                float noiseValue = _density * ramp;
+                float noiseValue = _density * depthRamp * yRamp;
                 if (_noiseType == FBM_NOISE)
                 {
                     noiseValue *= fractalBrownianMotionNoise(samplePosition4d);
