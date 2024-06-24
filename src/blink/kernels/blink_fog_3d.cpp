@@ -440,6 +440,24 @@ void createLatLongCameraRay(
 }
 
 
+// SDFs
+
+
+/**
+ * Compute the min distance from a point to a plane.
+ * Anything underneath the plane, as defined by the normal direction
+ * pointing above, will be considered inside.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg normal: The normal direction of the plane.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+inline float distanceToPlane(const float3 &position, const float3 &normal)
+{
+    return dot(position, normal);
+}
+
 
 kernel FogKernel : ImageComputationKernel<ePixelWise>
 {
@@ -473,8 +491,10 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _density;
         int _samplesPerRay;
         float4 _depthRamp;
-        float4 _yRamp;
-        bool _enableYRamp;
+        float4 _planarRamp;
+        bool _enablePlanarRamp;
+        float3 _planePosition;
+        float3 _planeNormal;
 
         // Noise Parameters
         float _size;
@@ -499,6 +519,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         int __simplex[64][4];
         int __perm[512];
         int __grad4[32][4];
+
+        float3 __planeNormal;
 
     /**
      * Give the parameters labels and default values.
@@ -532,8 +554,10 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_raysPerPixel, "Rays Per Pixel", 1);
         defineParam(_samplesPerRay, "Samples Per Ray", 5);
         defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
-        defineParam(_yRamp, "Sample Y Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
-        defineParam(_enableYRamp, "Enable Y Ramp", false);
+        defineParam(_planarRamp, "Sample Planar Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enablePlanarRamp, "Enable Planar Ramp", false);
+        defineParam(_planePosition, "Plane Position", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_planeNormal, "Plane Normal", float3(0.0f, 1.0f, 0.0f));
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -640,6 +664,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 __grad4[i][j] = grad4Init[i][j];
             }
         }
+
+        __planeNormal = normalize(_planeNormal);
     }
 
     /**
@@ -1003,21 +1029,33 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     0.0f
                 );
 
-                // Apply the scaling specified by the y ramp
-                if (_enableYRamp)
+                // Apply the scaling specified by the planar ramp
+                if (_enablePlanarRamp)
                 {
-                    const float yPosition = samplePosition4d.y;
-                    if (yPosition <= _yRamp.x || yPosition >= _yRamp.w)
-                    {
+                    const float minDistanceToPlane = fabs(distanceToPlane(
+                        rayOrigin - _planePosition,
+                        __planeNormal
+                    ));
+                    if (
+                        minDistanceToPlane < _planarRamp.x
+                        || minDistanceToPlane >= _planarRamp.w
+                    ) {
                         continue;
                     }
-                    else if (yPosition < _yRamp.y)
+                    else if (minDistanceToPlane < _planarRamp.y)
                     {
-                        ramp *= (yPosition - _yRamp.y) / (_yRamp.y - _yRamp.x) + 1.0f;
+                        ramp *= (
+                            (minDistanceToPlane - _planarRamp.y)
+                            / (_planarRamp.y - _planarRamp.x)
+                            + 1.0f
+                        );
                     }
-                    else if (yPosition > _yRamp.z)
+                    else if (minDistanceToPlane > _planarRamp.z)
                     {
-                        ramp *= (_yRamp.w - yPosition) / (_yRamp.w - _yRamp.z);
+                        ramp *= (
+                            (_planarRamp.w - minDistanceToPlane)
+                            / (_planarRamp.w - _planarRamp.z)
+                        );
                     }
                 }
 
