@@ -11,6 +11,46 @@
 
 
 /**
+ * The maximum component of a vector.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The maximum component of the vector.
+ */
+inline float maxComponent(const float3 &vector)
+{
+    return max(vector.x, max(vector.y, vector.z));
+}
+
+
+/**
+ * The negative part of the vector. Ie. any positive values will be 0,
+ * and the negative values will be positive.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The negative part of the vector.
+ */
+inline float negativePart(const float value)
+{
+    return -min(value, 0.0f);
+}
+
+
+/**
+ * The positive part of the vector. Ie. any negative values will be 0.
+ *
+ * @arg vector: The vector.
+ *
+ * @returns: The positive part of the vector.
+ */
+inline float3 positivePart(const float3 &vector)
+{
+    return max(vector, float3(0));
+}
+
+
+/**
  * Compute the fractional portion of the value. Ex. 3.5 returns 0.5
  *
  * @arg value: The value to get the fractional portion of.
@@ -169,6 +209,30 @@ inline void rotationFromWorldMatrix(const float4x4 &worldMatrix, float3x3 &rotat
     rotationMatrix[2][0] = worldMatrix[2][0];
     rotationMatrix[2][1] = worldMatrix[2][1];
     rotationMatrix[2][2] = worldMatrix[2][2];
+}
+
+
+/**
+ * Get a rotation matrix from radian angle values in ZYX order.
+ *
+ * @arg angles: The rotation angles in radians.
+ * @arg out: The location to store the rotation matrix.
+ */
+inline void rotationMatrix(const float3 &angles, float3x3 &out)
+{
+    const float3 cosAngles = cos(angles);
+    const float3 sinAngles = sin(angles);
+
+    // Why tf can I not init a float3x3 normally??
+    out[0][0] = cosAngles.y * cosAngles.z;
+    out[0][1] = sinAngles.x * sinAngles.y * cosAngles.z - cosAngles.x * sinAngles.z;
+    out[0][2] = cosAngles.x * sinAngles.y * cosAngles.z + sinAngles.x * sinAngles.z;
+    out[1][0] = cosAngles.y * sinAngles.z;
+    out[1][1] = sinAngles.x * sinAngles.y * sinAngles.z + cosAngles.x * cosAngles.z;
+    out[1][2] = cosAngles.x * sinAngles.y * sinAngles.z - sinAngles.x * cosAngles.z;
+    out[2][0] = -sinAngles.y;
+    out[2][1] = sinAngles.x * cosAngles.y;
+    out[2][2] = cosAngles.x * cosAngles.y;
 }
 
 
@@ -444,6 +508,37 @@ void createLatLongCameraRay(
 
 
 /**
+ * Compute the signed distance along a vector
+ *
+ * @arg vector: A vector from a point to the nearest surface of an
+ *     object.
+ *
+ * @returns: The signed length of the vector.
+ */
+inline float sdfLength(const float3 &vector)
+{
+    return (
+        length(positivePart(vector))
+        - negativePart(maxComponent(vector))
+    );
+}
+
+
+/**
+ * Compute the min distance from a point to a sphere.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg radius: The radius of the sphere.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+inline float distanceToSphere(const float3 &position, const float radius)
+{
+    return length(position) - radius;
+}
+
+
+/**
  * Compute the min distance from a point to a plane.
  * Anything underneath the plane, as defined by the normal direction
  * pointing above, will be considered inside.
@@ -456,6 +551,31 @@ void createLatLongCameraRay(
 inline float distanceToPlane(const float3 &position, const float3 &normal)
 {
     return dot(position, normal);
+}
+
+
+/**
+ * Compute the min distance from a point to a rectangular prism.
+ * Centered at the origin.
+ *
+ * @arg position: The point to get the distance to, from the object.
+ * @arg width: The width (x) of the prism.
+ * @arg height: The height (y) of the prism.
+ * @arg depth: The depth (z) of the prism.
+ *
+ * @returns: The minimum distance from the point to the shape.
+ */
+inline float distanceToRectangularPrism(
+        const float3 &position,
+        const float width,
+        const float height,
+        const float depth)
+{
+    // Only look at positive quadrant, using symmetry
+    const float3 prismToPosition = fabs(position) - float3(width, height, depth) / 2.0f;
+    // Clamp the components that are inside the prism to the surface
+    // before getting the distance
+    return sdfLength(prismToPosition);
 }
 
 
@@ -489,14 +609,23 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         int _raysPerPixel;
         float _density;
         int _samplesPerRay;
+
         float4 _depthRamp;
+
         float4 _planarRamp;
         bool _enablePlanarRamp;
         float3 _planePosition;
         float3 _planeNormal;
+
         bool _enableSphericalRamp;
         float3 _sphericalRampPosition;
         float2 _sphericalRampRadii;
+
+        float3 _boxRampPosition;
+        float3 _boxRampRotation;
+        float3 _boxRampDimensions;
+        float _boxRampFalloff;
+        bool _enableBoxRamp;
 
         // Noise Parameters
         float _size;
@@ -516,11 +645,15 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float4x4 __inverseCameraProjectionMatrix;
         float __aperture;
 
+        float4 __translation;
+
         int __simplex[64][4];
         int __perm[512];
         int __grad4[32][4];
 
         float3 __planeNormal;
+
+        float __sphericalRampFalloffDistance;
 
     /**
      * Give the parameters labels and default values.
@@ -553,14 +686,23 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_density, "Density", 1.0f);
         defineParam(_raysPerPixel, "Rays Per Pixel", 1);
         defineParam(_samplesPerRay, "Samples Per Ray", 5);
+
         defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+
         defineParam(_planarRamp, "Sample Planar Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
         defineParam(_enablePlanarRamp, "Enable Planar Ramp", false);
         defineParam(_planePosition, "Plane Position", float3(0.0f, 0.0f, 0.0f));
         defineParam(_planeNormal, "Plane Normal", float3(0.0f, 1.0f, 0.0f));
+
         defineParam(_enableSphericalRamp, "Enable Spherical Ramp", false);
         defineParam(_sphericalRampPosition, "Spherical Ramp Position", float3(0.0f, 0.0f, 0.0f));
         defineParam(_sphericalRampRadii, "Spherical Ramp Radii", float2(1.0f, 2.0f));
+
+        defineParam(_boxRampPosition, "Box Ramp Position", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_boxRampRotation, "Box Ramp Rotation", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_boxRampDimensions, "Box Ramp Dimensions", float3(1.0f, 1.0f, 1.0f));
+        defineParam(_boxRampFalloff, "Box Ramp Falloff", 1.0f);
+        defineParam(_enableBoxRamp, "Enable Box Ramp", false);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -667,7 +809,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             }
         }
 
+        __translation = float4(_translation.x, _translation.y, _translation.z, 0.0f);
+
         __planeNormal = normalize(_planeNormal);
+
+        __sphericalRampFalloffDistance = _sphericalRampRadii.y - _sphericalRampRadii.x;
     }
 
     /**
@@ -843,8 +989,14 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
      *
      * @returns: The noise value in the range [-1, 1].
      */
-    float fractalBrownianMotionNoise(const float4 &position)
+    float fractalBrownianMotionNoise(const float3 &position)
     {
+        const float4 position4d = float4(
+            position.x,
+            position.y,
+            position.z,
+            0.0f
+        );
         float output = 0.0f;
         float frequency = _lacunarity;
         float amplitude = 1.0f;
@@ -859,13 +1011,13 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 (_highFrequencyScale * octaveFraction)
                 + (_lowFrequencyScale * (1.0f - octaveFraction))
             );       
-            translation = (
+            translation = __translation + (
                 (_highFrequencyTranslation * octaveFraction)
                 + (_lowFrequencyTranslation * (1.0f - octaveFraction))
             );
 
             output += amplitude * perlinSimplexNoise(
-                (position * scale + translation) * frequency / _size
+                (position4d * scale + translation) * frequency / _size
             );
 
             frequency *= _lacunarity;
@@ -884,8 +1036,14 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
      *
      * @returns: The noise value in the range [0, 1].
      */
-    float turbulenceNoise(const float4 &position)
+    float turbulenceNoise(const float3 &position)
     {
+        const float4 position4d = float4(
+            position.x,
+            position.y,
+            position.z,
+            0.0f
+        );
         float output = 0.0f;
         float frequency = _lacunarity;
         float amplitude = 1.0f;
@@ -900,14 +1058,14 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 (_highFrequencyScale * octaveFraction)
                 + (_lowFrequencyScale * (1.0f - octaveFraction))
             );       
-            translation = (
+            translation = __translation + (
                 (_highFrequencyTranslation * octaveFraction)
                 + (_lowFrequencyTranslation * (1.0f - octaveFraction))
             );
 
             output += fabs(
                 amplitude * perlinSimplexNoise(
-                    (position * scale + translation) * frequency / _size
+                    (position4d * scale + translation) * frequency / _size
                 )
             );
 
@@ -1006,7 +1164,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             // Set the depth to the start of the depth ramp and add a random offset
             // to eliminate layer lines
             float depth = _depthRamp.x;
-            rayOrigin += depth * rayDirection + _translation;
+            rayOrigin += depth * rayDirection;
 
             float invertedLastSample = 1.0f;
             for (int step=0; step < _samplesPerRay; step++)
@@ -1014,30 +1172,23 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 depth += sampleStep;
                 rayOrigin += rayDirection * sampleStep;
 
-                // Get the noise value based on which type of noise we are using
-                const float4 samplePosition4d = float4(
-                    rayOrigin.x,
-                    rayOrigin.y,
-                    rayOrigin.z,
-                    0.0f
-                );
-
                 float ramp = 1.0f;
 
                 if (_enableSphericalRamp)
                 {
-                    const float distanceToSphereCenter = length(
-                        rayOrigin - _sphericalRampPosition
+                    const float minDistanceToSphere = distanceToSphere(
+                        rayOrigin - _sphericalRampPosition,
+                        _sphericalRampRadii.x
                     );
-                    if (distanceToSphereCenter >= _sphericalRampRadii.y)
+                    if (minDistanceToSphere >= __sphericalRampFalloffDistance)
                     {
                         continue;
                     }
-                    else if (distanceToSphereCenter > _sphericalRampRadii.x)
+                    else if (minDistanceToSphere > 0.0f)
                     {
                         ramp *= (
-                            (_sphericalRampRadii.y - distanceToSphereCenter)
-                            / (_sphericalRampRadii.y - _sphericalRampRadii.x)
+                            (__sphericalRampFalloffDistance - minDistanceToSphere)
+                            / __sphericalRampFalloffDistance
                         );
                     }
                 }
@@ -1072,6 +1223,29 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     }
                 }
 
+                if (_enableBoxRamp)
+                {
+                    float3x3 rotMatrix;
+                    rotationMatrix(_boxRampRotation, rotMatrix);
+                    const float minDistanceToBox = distanceToRectangularPrism(
+                        matmul(
+                            rotMatrix.invert(),
+                            rayOrigin - _boxRampPosition
+                        ),
+                        _boxRampDimensions.x,
+                        _boxRampDimensions.y,
+                        _boxRampDimensions.z
+                    );
+                    if (minDistanceToBox >= _boxRampFalloff)
+                    {
+                        continue;
+                    }
+                    else if (minDistanceToBox > 0.0f)
+                    {
+                        ramp *= (_boxRampFalloff - minDistanceToBox) / _boxRampFalloff;
+                    }
+                }
+
                 // Apply the scaling specified by the depth ramp
                 if (depth < _depthRamp.y)
                 {
@@ -1086,11 +1260,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 float noiseValue = _density * ramp;
                 if (_noiseType == FBM_NOISE)
                 {
-                    noiseValue *= fractalBrownianMotionNoise(samplePosition4d);
+                    noiseValue *= fractalBrownianMotionNoise(rayOrigin);
                 }
                 else
                 {
-                    noiseValue *= turbulenceNoise(samplePosition4d);
+                    noiseValue *= turbulenceNoise(rayOrigin);
                 }
 
                 // Over the noise values
