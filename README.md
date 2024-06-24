@@ -12,6 +12,12 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 1.5.0
+
+- Changed the `y ramp` to a `planar ramp`
+  - allows you to specify a plane of noise with a falloff on either side
+  - the plane is specified by a point and normal, allowing any arbitrary direction/positioning of the noise plane
+
 ### New in Version 1.4.0
 
 - Added a `y ramp` knob to vary the noise density along the y-axis in worldspace
