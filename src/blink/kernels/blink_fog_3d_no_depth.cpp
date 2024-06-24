@@ -494,6 +494,9 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         bool _enablePlanarRamp;
         float3 _planePosition;
         float3 _planeNormal;
+        bool _enableSphericalRamp;
+        float3 _sphericalRampPosition;
+        float2 _sphericalRampRadii;
 
         // Noise Parameters
         float _size;
@@ -555,6 +558,9 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_enablePlanarRamp, "Enable Planar Ramp", false);
         defineParam(_planePosition, "Plane Position", float3(0.0f, 0.0f, 0.0f));
         defineParam(_planeNormal, "Plane Normal", float3(0.0f, 1.0f, 0.0f));
+        defineParam(_enableSphericalRamp, "Enable Spherical Ramp", false);
+        defineParam(_sphericalRampPosition, "Spherical Ramp Position", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_sphericalRampRadii, "Spherical Ramp Radii", float2(1.0f, 2.0f));
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -1017,6 +1023,24 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 );
 
                 float ramp = 1.0f;
+
+                if (_enableSphericalRamp)
+                {
+                    const float distanceToSphereCenter = length(
+                        rayOrigin - _sphericalRampPosition
+                    );
+                    if (distanceToSphereCenter >= _sphericalRampRadii.y)
+                    {
+                        continue;
+                    }
+                    else if (distanceToSphereCenter > _sphericalRampRadii.x)
+                    {
+                        ramp *= (
+                            (_sphericalRampRadii.y - distanceToSphereCenter)
+                            / (_sphericalRampRadii.y - _sphericalRampRadii.x)
+                        );
+                    }
+                }
 
                 // Apply the scaling specified by the planar ramp
                 if (_enablePlanarRamp)
