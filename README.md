@@ -12,6 +12,10 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 1.8.0
+
+- Added exponential falloff to sphere, plane, and box ramps
+
 ### New in Version 1.7.0
 
 - Added a `box ramp` to contain the noise within a box at a position and with a rotation
