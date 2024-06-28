@@ -64,6 +64,19 @@ inline float fract(const float value)
 
 
 /**
+ * Saturate a value ie. clamp between 0 and 1
+ *
+ * @arg value: The value to saturate
+ *
+ * @returns: The clamped value
+ */
+inline float saturate(float value)
+{
+    return clamp(value, 0.0f, 1.0f);
+}
+
+
+/**
  * Multiply a 4d vector by a 4x4 matrix.
  *
  * @arg m: The matrix that will transform the vector.
@@ -616,16 +629,22 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         bool _enablePlanarRamp;
         float3 _planePosition;
         float3 _planeNormal;
+        float _planarFalloffPower;
+        float _planarFalloffOffset;
 
         bool _enableSphericalRamp;
         float3 _sphericalRampPosition;
         float2 _sphericalRampRadii;
+        float _sphericalFalloffPower;
+        float _sphericalFalloffOffset;
 
         float3 _boxRampPosition;
         float3 _boxRampRotation;
         float3 _boxRampDimensions;
         float _boxRampFalloff;
         bool _enableBoxRamp;
+        float _boxFalloffPower;
+        float _boxFalloffOffset;
 
         // Noise Parameters
         float _size;
@@ -693,16 +712,22 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_enablePlanarRamp, "Enable Planar Ramp", false);
         defineParam(_planePosition, "Plane Position", float3(0.0f, 0.0f, 0.0f));
         defineParam(_planeNormal, "Plane Normal", float3(0.0f, 1.0f, 0.0f));
+        defineParam(_planarFalloffPower, "Planar Falloff Power", 0.0f);
+        defineParam(_planarFalloffOffset, "Planar Falloff Offset", 0.0f);
 
         defineParam(_enableSphericalRamp, "Enable Spherical Ramp", false);
         defineParam(_sphericalRampPosition, "Spherical Ramp Position", float3(0.0f, 0.0f, 0.0f));
         defineParam(_sphericalRampRadii, "Spherical Ramp Radii", float2(1.0f, 2.0f));
+        defineParam(_sphericalFalloffPower, "Spherical Falloff Power", 0.0f);
+        defineParam(_sphericalFalloffOffset, "Spherical Falloff Offset", 0.0f);
 
         defineParam(_boxRampPosition, "Box Ramp Position", float3(0.0f, 0.0f, 0.0f));
         defineParam(_boxRampRotation, "Box Ramp Rotation", float3(0.0f, 0.0f, 0.0f));
         defineParam(_boxRampDimensions, "Box Ramp Dimensions", float3(1.0f, 1.0f, 1.0f));
         defineParam(_boxRampFalloff, "Box Ramp Falloff", 1.0f);
         defineParam(_enableBoxRamp, "Enable Box Ramp", false);
+        defineParam(_boxFalloffPower, "Box Falloff Power", 0.0f);
+        defineParam(_boxFalloffOffset, "Box Falloff Offset", 0.0f);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -1191,6 +1216,20 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                             / __sphericalRampFalloffDistance
                         );
                     }
+                    if (_sphericalFalloffPower != 0.0f)
+                    {
+                        ramp /= pow(
+                            max(
+                                1e-6,
+                                fabs(
+                                    _sphericalFalloffOffset
+                                    + minDistanceToSphere
+                                    + _sphericalRampRadii.x
+                                )
+                            ),
+                            _sphericalFalloffPower
+                        );
+                    }
                 }
 
                 // Apply the scaling specified by the planar ramp
@@ -1221,17 +1260,25 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                             / (_planarRamp.w - _planarRamp.z)
                         );
                     }
+                    if (_planarFalloffPower != 0.0f)
+                    {
+                        ramp /= pow(
+                            max(
+                                1e-6,
+                                fabs(_planarFalloffOffset + minDistanceToPlane)
+                            ),
+                            _planarFalloffPower
+                        );
+                    }
                 }
 
                 if (_enableBoxRamp)
                 {
                     float3x3 rotMatrix;
                     rotationMatrix(_boxRampRotation, rotMatrix);
+                    const float3 toBoxCenter = rayOrigin - _boxRampPosition;
                     const float minDistanceToBox = distanceToRectangularPrism(
-                        matmul(
-                            rotMatrix.invert(),
-                            rayOrigin - _boxRampPosition
-                        ),
+                        matmul(rotMatrix.invert(), toBoxCenter),
                         _boxRampDimensions.x,
                         _boxRampDimensions.y,
                         _boxRampDimensions.z
@@ -1243,6 +1290,16 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     else if (minDistanceToBox > 0.0f)
                     {
                         ramp *= (_boxRampFalloff - minDistanceToBox) / _boxRampFalloff;
+                    }
+                    if (_boxFalloffPower != 0.0f)
+                    {
+                        ramp /= pow(
+                            max(
+                                1e-6,
+                                _boxFalloffOffset + length(toBoxCenter)
+                            ),
+                            _boxFalloffPower
+                        );
                     }
                 }
 
@@ -1269,7 +1326,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
                 // Over the noise values
                 resultPixel += noiseValue * invertedLastSample;
-                invertedLastSample *= 1.0f - noiseValue;
+                invertedLastSample *= saturate(1.0f - noiseValue);
             }
 
             const float2 lastSeed = seed0;
