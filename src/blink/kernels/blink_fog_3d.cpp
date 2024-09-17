@@ -11,22 +11,6 @@
 
 
 /**
- * Blend linearly between two values.
- *
- * @arg value0: The first value.
- * @arg value1: The second value.
- * @arg weight: The blend weight, 1 will return value0, and 0 will
- *     return value1.
- *
- * @returns: The blended value.
- */
-inline float mix(const float value0, const float value1, const float weight)
-{
-    return (1.0f - weight) * value0 + weight * value1;
-}
-
-
-/**
  * The maximum component of a vector.
  *
  * @arg vector: The vector.
@@ -608,24 +592,6 @@ inline float distanceToRectangularPrism(
 }
 
 
-/**
- * Smoothly blend between two objects. Ie. The minimum. The
- * corresponding colour will be placed in colour1, and the corresponding
- * surface will be placed in colour9.
- *
- * @arg value0: The first value.
- * @arg value1: The second value.
- * @arg blendSize: The amount to blend between the objects.
- *
- * @returns: The nearest, modified value.
- */
-inline float smoothUnion(const float value0, const float value1, const float smoothing)
-{
-    const float amount = saturate(0.5f + 0.5f * (value1 - value0) / smoothing);
-    return mix(value1, value0, amount) - smoothing * amount * (1.0f - amount);
-}
-
-
 kernel FogKernel : ImageComputationKernel<ePixelWise>
 {
     // the input which specifies the format, process is called once per pixel
@@ -650,6 +616,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _fStop;
         bool _depthOfFieldEnabled;
         bool _latLong;
+        bool _useCameraDepth;
 
         // Image params
         float _formatWidth;
@@ -704,6 +671,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     local:
         // These local variables are not exposed to the user.
         float4x4 __inverseCameraProjectionMatrix;
+        float4x4 __inverseCameraWorldMatrix;
         float __aperture;
 
         float4 __translation;
@@ -752,6 +720,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_fStop, "fstop", 16.0f);
         defineParam(_depthOfFieldEnabled, "Enable Depth Of Field", true);
         defineParam(_latLong, "Output LatLong", false);
+        defineParam(_useCameraDepth, "Use Camera Depth", false);
 
         // Image params
         defineParam(_formatHeight, "Screen Height", 2160.0f);
@@ -809,14 +778,15 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     void init()
     {
         const float aspect = aspectRatio(_formatHeight, _formatWidth);
-        float4x4 cameraProjectionMatrix = projectionMatrix(
+        __inverseCameraProjectionMatrix = projectionMatrix(
             _focalLength,
             _horizontalAperture,
             aspect,
             _nearPlane,
             _farPlane
-        );
-        __inverseCameraProjectionMatrix = cameraProjectionMatrix.invert();
+        ).invert();
+        __inverseCameraWorldMatrix = _cameraWorldMatrix;
+        __inverseCameraWorldMatrix.invert();
 
         __aperture = fStopToAperture(_fStop, _focalLength);
 
@@ -1310,7 +1280,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         }
         else if (!__enableRaymarching)
         {
-            initialDepth = -1.0f;
+            initialDepth = 0.0f;
         }
 
         if (!__enableRaymarching)
@@ -1390,7 +1360,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     {
         float pixelDepth = depthAOV(0);
         pixelDepth = (
-            pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _depthRamp.w
+            pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _maxDistance
         );
         const float pixelDepthAlpha = 1.0f - depthAOV(3);
 
@@ -1400,8 +1370,6 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float2 seed1 = float2(seedPixel.z, seedPixel.w) + RAND_CONST_1 * pixelLocation;
 
         float4 resultPixel = float4(0.0f);
-
-        const float sampleStep = (_depthRamp.w - _depthRamp.x) / (float) _samplesPerRay;
 
         for (int path=1; path <= _raysPerPixel; path++)
         {
@@ -1418,7 +1386,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             // Set the depth to the start of the depth ramp and add a random offset
             // to eliminate layer lines
             float depth = _maxDistance;
-            float sampleStep = __depthSampleStep;
+            float sampleStep = _maxDistance / (float) _samplesPerRay;
             computeDepthAndSampleStep(
                 seed0,
                 rayOrigin + rayDirection * _nearPlane,
@@ -1439,7 +1407,16 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             {
                 float ramp = 1.0f;
                 depth += sampleStep;
-                if (depth > pixelDepth)
+                rayOrigin += rayDirection * sampleStep;
+                float adjustedDepth = depth;
+                if (_useCameraDepth)
+                {
+                    adjustedDepth = fabs(matmul(
+                        __inverseCameraWorldMatrix,
+                        float4(rayOrigin.x, rayOrigin.y, rayOrigin.z, 1.0f)
+                    )[2]);
+                }
+                if (adjustedDepth > pixelDepth)
                 {
                     if (pixelDepthAlpha <= 0.0f)
                     {
@@ -1447,7 +1424,6 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     }
                     ramp *= pixelDepthAlpha;
                 }
-                rayOrigin += rayDirection * sampleStep;
 
                 if (_enableSphericalRamp)
                 {
@@ -1481,10 +1457,9 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                         );
                     }
                 }
-
-                // Apply the scaling specified by the planar ramp
-                if (_enablePlanarRamp)
+                else if (_enablePlanarRamp)
                 {
+                    // Apply the scaling specified by the planar ramp
                     const float minDistanceToPlane = distanceToPlane(
                         rayOrigin - _planePosition,
                         __planeNormal
@@ -1521,8 +1496,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                         );
                     }
                 }
-
-                if (_enableBoxRamp)
+                else if (_enableBoxRamp)
                 {
                     const float3 toBoxCenter = rayOrigin - _boxRampPosition;
                     const float minDistanceToBox = distanceToRectangularPrism(
@@ -1554,13 +1528,17 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 if (_enableDepthRamp)
                 {
                     // Apply the scaling specified by the depth ramp
-                    if (depth < _depthRamp.y)
+                    if (adjustedDepth < _depthRamp.y)
                     {
-                        ramp *= (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
+                        ramp *= (
+                            (adjustedDepth - _depthRamp.y)
+                            / (_depthRamp.y - _depthRamp.x)
+                            + 1.0f
+                        );
                     }
-                    else if (depth > _depthRamp.z)
+                    else if (adjustedDepth > _depthRamp.z)
                     {
-                        ramp *= (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
+                        ramp *= (_depthRamp.w - adjustedDepth) / (_depthRamp.w - _depthRamp.z);
                     }
                 }
 
