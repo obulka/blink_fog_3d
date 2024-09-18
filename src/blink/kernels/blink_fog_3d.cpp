@@ -1267,7 +1267,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
 
     void computeDepthAndSampleStep(
-        const float2 &seed0,
+        const float2 &seed,
         const float3 &rayOrigin,
         const float3 &rayDirection,
         float &initialDepth,
@@ -1285,7 +1285,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
         if (!__enableRaymarching)
         {
-            initialDepth += random(seed0.x + seed0.y) * sampleStep;
+            initialDepth += random(seed.x + seed.y) * sampleStep;
             return;
         }
 
@@ -1321,7 +1321,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     {
                         sampleStep = _maxDistance / (float) _samplesPerRay;
                     }
-                    initialDepth += random(seed0.x + seed0.y) * sampleStep;
+                    initialDepth += random(seed.x + seed.y) * sampleStep;
                     return;
                 }
                 hitSurface = true;
@@ -1342,7 +1342,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 sampleStep,
                 (distance - initialDepth) / (float) _samplesPerRay
             );
-            initialDepth += random(seed0.x + seed0.y) * sampleStep;
+            initialDepth += random(seed.x + seed.y) * sampleStep;
         }
         else
         {
