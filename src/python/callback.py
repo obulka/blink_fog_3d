@@ -62,6 +62,42 @@ class BlinkFogKnobManager(KnobManager):
     _rays_per_pixel = "rays_per_pixel"
     _output_deep = "output_deep"
 
+    _shape_enable_knobs = {
+        "plane": "enable_planar_ramp",
+        "box": "enable_box_ramp",
+        "sphere": "enable_spherical_ramp",
+    }
+    _shape_knobs = {
+        "plane": [
+            "plane_point",
+            "plane_normal",
+            "in",
+            "out",
+            "in_falloff",
+            "out_falloff",
+            "plane_div",
+            "plane_falloff_power",
+            "plane_falloff_offset",
+        ],
+        "box": [
+            "box_ramp_position",
+            "box_ramp_rotation",
+            "width",
+            "height",
+            "depth",
+            "box_falloff_distance",
+            "box_falloff_power",
+            "box_falloff_offset",
+        ],
+        "sphere": [
+            "spherical_ramp_position",
+            "spherical_ramp_start_radius",
+            "spherical_ramp_end_radius",
+            "sphere_falloff_power",
+            "sphere_falloff_offset",
+        ],
+    }
+
     def __init__(self):
         super(BlinkFogKnobManager, self).__init__()
 
@@ -201,3 +237,11 @@ class BlinkFogKnobManager(KnobManager):
                 elif self._node.knob(self._holdout_mode).getValue() < 2:
                     current_deep_samples = len(nuke.allNodes(filter="DeepFromImage"))
                     self._remove_deep_samples(current_deep_samples - 1, current_deep_samples)
+
+    @_knob_changed_callbacks.register("shapes")
+    def _shape_dropdown_changed(self):
+        for shape, knob_name in self._shape_enable_knobs.items():
+            self._node.knob(knob_name).setValue(shape == self._knob.value())
+        for shape, knob_names in self._shape_knobs.items():
+            for knob_name in knob_names:
+                self._node.knob(knob_name).setVisible(shape == self._knob.value())

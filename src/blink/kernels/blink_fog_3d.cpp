@@ -616,6 +616,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _fStop;
         bool _depthOfFieldEnabled;
         bool _latLong;
+        bool _useCameraDepth;
 
         // Image params
         float _formatWidth;
@@ -624,6 +625,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _density;
         int _samplesPerRay;
 
+        bool _enableDepthRamp;
         float4 _depthRamp;
 
         float4 _planarRamp;
@@ -662,9 +664,14 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
         bool _invertDepth;
 
+        // Raymarch parameters
+        float _hitTolerance;
+        float _maxDistance;
+
     local:
         // These local variables are not exposed to the user.
         float4x4 __inverseCameraProjectionMatrix;
+        float4x4 __inverseCameraWorldMatrix;
         float __aperture;
 
         float4 __translation;
@@ -673,9 +680,21 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         int __perm[512];
         int __grad4[32][4];
 
-        float3 __planeNormal;
+        float __depthSampleStep;
 
         float __sphericalRampFalloffDistance;
+
+        float3 __planeNormal;
+
+        float3x3 __inverseBoxRotMatrix;
+
+        bool __enableRaymarching;
+
+        float3 __offset0;
+        float3 __offset1;
+        float3 __offset2;
+        float3 __offset3;
+
 
     /**
      * Give the parameters labels and default values.
@@ -683,13 +702,13 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     void define()
     {
         // Camera params
-        defineParam(_focalLength, "Focal Length", 50.0f);
-        defineParam(_horizontalAperture, "Horizontal Aperture", 24.576f);
-        defineParam(_nearPlane, "Near Plane", 0.1f);
-        defineParam(_farPlane, "Far Plane", 10000.0f);
+        defineParam(_focalLength, "FocalLength", 50.0f);
+        defineParam(_horizontalAperture, "HorizontalAperture", 24.576f);
+        defineParam(_nearPlane, "NearPlane", 0.1f);
+        defineParam(_farPlane, "FarPlane", 10000.0f);
         defineParam(
             _cameraWorldMatrix,
-            "Camera World Matrix",
+            "CameraWorldMatrix",
             float4x4(
                 1, 0, 0, 0,
                 0, 1, 0, 0,
@@ -697,54 +716,59 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 0, 0, 0, 1
             )
         );
-        defineParam(_focalDistance, "Focal Distance", 4.0f);
+        defineParam(_focalDistance, "FocalDistance", 4.0f);
         defineParam(_fStop, "fstop", 16.0f);
-        defineParam(_depthOfFieldEnabled, "Enable Depth Of Field", true);
-        defineParam(_latLong, "Output LatLong", false);
+        defineParam(_depthOfFieldEnabled, "EnableDepthOfField", true);
+        defineParam(_latLong, "OutputLatLong", false);
+        defineParam(_useCameraDepth, "UseCameraDepth", false);
 
         // Image params
-        defineParam(_formatHeight, "Screen Height", 2160.0f);
-        defineParam(_formatWidth, "Screen Width", 3840.0f);
+        defineParam(_formatHeight, "ScreenHeight", 2160.0f);
+        defineParam(_formatWidth, "ScreenWidth", 3840.0f);
         defineParam(_density, "Density", 1.0f);
-        defineParam(_raysPerPixel, "Rays Per Pixel", 1);
-        defineParam(_samplesPerRay, "Samples Per Ray", 5);
+        defineParam(_raysPerPixel, "RaysPerPixel", 1);
+        defineParam(_samplesPerRay, "SamplesPerRay", 5);
 
-        defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enableDepthRamp, "EnableDepthRamp", true);
+        defineParam(_depthRamp, "SampleDepthRamp", float4(5.0f, 10.0f, 15.0f, 20.0f));
 
-        defineParam(_planarRamp, "Sample Planar Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
-        defineParam(_enablePlanarRamp, "Enable Planar Ramp", false);
-        defineParam(_planePosition, "Plane Position", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_planeNormal, "Plane Normal", float3(0.0f, 1.0f, 0.0f));
-        defineParam(_planarFalloffPower, "Planar Falloff Power", 0.0f);
-        defineParam(_planarFalloffOffset, "Planar Falloff Offset", 0.0f);
+        defineParam(_planarRamp, "SamplePlanarRamp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enablePlanarRamp, "EnablePlanarRamp", false);
+        defineParam(_planePosition, "PlanePosition", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_planeNormal, "PlaneNormal", float3(0.0f, 1.0f, 0.0f));
+        defineParam(_planarFalloffPower, "PlanarFalloffPower", 0.0f);
+        defineParam(_planarFalloffOffset, "PlanarFalloffOffset", 0.0f);
 
-        defineParam(_enableSphericalRamp, "Enable Spherical Ramp", false);
-        defineParam(_sphericalRampPosition, "Spherical Ramp Position", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_sphericalRampRadii, "Spherical Ramp Radii", float2(1.0f, 2.0f));
-        defineParam(_sphericalFalloffPower, "Spherical Falloff Power", 0.0f);
-        defineParam(_sphericalFalloffOffset, "Spherical Falloff Offset", 0.0f);
+        defineParam(_enableSphericalRamp, "EnableSphericalRamp", false);
+        defineParam(_sphericalRampPosition, "SphericalRampPosition", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_sphericalRampRadii, "SphericalRampRadii", float2(1.0f, 2.0f));
+        defineParam(_sphericalFalloffPower, "SphericalFalloffPower", 0.0f);
+        defineParam(_sphericalFalloffOffset, "SphericalFalloffOffset", 0.0f);
 
-        defineParam(_boxRampPosition, "Box Ramp Position", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_boxRampRotation, "Box Ramp Rotation", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_boxRampDimensions, "Box Ramp Dimensions", float3(1.0f, 1.0f, 1.0f));
-        defineParam(_boxRampFalloff, "Box Ramp Falloff", 1.0f);
-        defineParam(_enableBoxRamp, "Enable Box Ramp", false);
-        defineParam(_boxFalloffPower, "Box Falloff Power", 0.0f);
-        defineParam(_boxFalloffOffset, "Box Falloff Offset", 0.0f);
+        defineParam(_boxRampPosition, "BoxRampPosition", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_boxRampRotation, "BoxRampRotation", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_boxRampDimensions, "BoxRampDimensions", float3(1.0f, 1.0f, 1.0f));
+        defineParam(_boxRampFalloff, "BoxRampFalloff", 1.0f);
+        defineParam(_enableBoxRamp, "EnableBoxRamp", false);
+        defineParam(_boxFalloffPower, "BoxFalloffPower", 0.0f);
+        defineParam(_boxFalloffOffset, "BoxFalloffOffset", 0.0f);
+
+        defineParam(_hitTolerance, "HitTolerance", 0.001f);
+        defineParam(_maxDistance, "MaxDistance", 1000000.0f);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
-        defineParam(_noiseType, "Noise Type", 0);
+        defineParam(_noiseType, "NoiseType", 0);
         defineParam(_translation, "Translation", float3(0.0f, 0.0f, 0.0f));
         defineParam(_octaves, "Octaves", 8.0f);
         defineParam(_lacunarity, "Lacunarity", 3.0f);
         defineParam(_gain, "Gain", 0.5f);
         defineParam(_gamma, "Gamma", 0.5f);
-        defineParam(_lowFrequencyScale, "Low Frequency Scale", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_highFrequencyScale, "High Frequency Scale", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_lowFrequencyTranslation, "Low Frequency Translation", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_highFrequencyTranslation, "High Frequency Translation", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_invertDepth, "Invert Depth", false);
+        defineParam(_lowFrequencyScale, "LowFrequencyScale", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_highFrequencyScale, "HighFrequencyScale", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_lowFrequencyTranslation, "LowFrequencyTranslation", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_highFrequencyTranslation, "HighFrequencyTranslation", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_invertDepth, "InvertDepth", false);
     }
 
 
@@ -754,14 +778,16 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     void init()
     {
         const float aspect = aspectRatio(_formatHeight, _formatWidth);
-        float4x4 cameraProjectionMatrix = projectionMatrix(
+        __inverseCameraProjectionMatrix = projectionMatrix(
             _focalLength,
             _horizontalAperture,
             aspect,
             _nearPlane,
             _farPlane
-        );
-        __inverseCameraProjectionMatrix = cameraProjectionMatrix.invert();
+        ).invert();
+        // Dumb af but trust that changing the following will either break nuke 12 or 15
+        __inverseCameraWorldMatrix = _cameraWorldMatrix;
+        __inverseCameraWorldMatrix = __inverseCameraWorldMatrix.invert();
 
         __aperture = fStopToAperture(_fStop, _focalLength);
 
@@ -838,11 +864,23 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             }
         }
 
+        __offset0 = 0.5773f * float3(1, -1, -1);
+        __offset1 = 0.5773f * float3(-1, -1, 1);
+        __offset2 = 0.5773f * float3(-1, 1, -1);
+        __offset3 = 0.5773f * float3(1, 1, 1);
+
         __translation = float4(_translation.x, _translation.y, _translation.z, 0.0f);
+
+        __depthSampleStep = (_depthRamp.w - _depthRamp.x) / (float) _samplesPerRay;
 
         __planeNormal = normalize(_planeNormal);
 
         __sphericalRampFalloffDistance = _sphericalRampRadii.y - _sphericalRampRadii.x;
+
+        __enableRaymarching = _enableSphericalRamp || _enableBoxRamp || _enablePlanarRamp;
+
+        rotationMatrix(_boxRampRotation, __inverseBoxRotMatrix);
+        __inverseBoxRotMatrix.invert();
     }
 
     /**
@@ -1157,6 +1195,164 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
 
     /**
+     * Compute the minimum distance to an object in the scene.
+     *
+     * @arg rayOrigin: The origin position of the ray.
+     * @arg pixelFootprint: A value proportional to the amount of world
+     *     space that fills a pixel, like the distance from camera.
+     *
+     * @returns: The minimum distance to an object in the scene.
+     */
+    float getMinDistanceToObjectInScene(const float3 &point)
+    {
+        if (_enableSphericalRamp)
+        {
+            return distanceToSphere(
+                point - _sphericalRampPosition,
+                _sphericalRampRadii.y
+            );
+        }
+        else if (_enablePlanarRamp)
+        {
+            return max(
+                distanceToPlane(
+                    point - (_planePosition + __planeNormal * min(_planarRamp.x, _planarRamp.w)),
+                    -__planeNormal
+                ),
+                distanceToPlane(
+                    point - (_planePosition + __planeNormal * max(_planarRamp.x, _planarRamp.w)),
+                    __planeNormal
+                )
+            );
+        }
+        else
+        {
+            const float3 toBoxCenter = point - _boxRampPosition;
+            return distanceToRectangularPrism(
+                matmul(__inverseBoxRotMatrix, toBoxCenter),
+                _boxRampDimensions.x,
+                _boxRampDimensions.y,
+                _boxRampDimensions.z
+            ) - _boxRampFalloff;
+        }
+    }
+
+
+    /**
+     * Estimate the surface normal at the closest point on the closest
+     * object to a point
+     *
+     * @arg point: The point near which to get the surface normal
+     * @arg pixelFootprint: A value proportional to the amount of world
+     *     space that fills a pixel, like the distance from camera.
+     *
+     * @returns: The normalized surface normal.
+     */
+    float3 estimateSurfaceNormal(const float3 &point)
+    {
+        return normalize(
+            __offset0 * getMinDistanceToObjectInScene(
+                point + __offset0 * _hitTolerance
+            )
+            + __offset1 * getMinDistanceToObjectInScene(
+                point + __offset1 * _hitTolerance
+            )
+            + __offset2 * getMinDistanceToObjectInScene(
+                point + __offset2 * _hitTolerance
+            )
+            + __offset3 * getMinDistanceToObjectInScene(
+                point + __offset3 * _hitTolerance
+            )
+        );
+    }
+
+
+    void computeDepthAndSampleStep(
+        const float2 &seed,
+        const float3 &rayOrigin,
+        const float3 &rayDirection,
+        float &initialDepth,
+        float &sampleStep
+    ) {
+        if (_enableDepthRamp)
+        {
+            sampleStep = __depthSampleStep;
+            initialDepth = _depthRamp.x;
+        }
+        else if (!__enableRaymarching)
+        {
+            initialDepth = 0.0f;
+        }
+
+        if (!__enableRaymarching)
+        {
+            initialDepth += random(seed.x + seed.y) * sampleStep;
+            return;
+        }
+
+        float pixelFootprint = _hitTolerance;
+        float distance = 0.0f;
+        float stepDistance = 0.0f;
+        bool hitSurface = false;
+        float3 position = rayOrigin;
+
+        while (distance < fabs(_maxDistance))
+        {
+            const float signedDistance = getMinDistanceToObjectInScene(position);
+
+            if(distance == 0.0f && signedDistance <= 0.0f)
+            {
+                hitSurface = true;
+                initialDepth = 0.0f;
+            }
+
+            stepDistance = fabs(signedDistance);
+            distance += stepDistance;
+            position += stepDistance * rayDirection;
+
+            if (stepDistance < pixelFootprint)
+            {
+                if (hitSurface)
+                {
+                    sampleStep = min(
+                        sampleStep,
+                        (distance - initialDepth) / (float) _samplesPerRay
+                    );
+                    if (sampleStep == 0.0f)
+                    {
+                        sampleStep = _maxDistance / (float) _samplesPerRay;
+                    }
+                    initialDepth += random(seed.x + seed.y) * sampleStep;
+                    return;
+                }
+                hitSurface = true;
+                initialDepth = min(initialDepth, distance);
+
+                const float3 normal = estimateSurfaceNormal(position + stepDistance * rayDirection);
+                position += 2.0f * pixelFootprint * (rayDirection - normal);
+                pixelFootprint = _hitTolerance;
+                continue;
+            }
+
+            pixelFootprint += _hitTolerance * stepDistance;
+        }
+
+        if (hitSurface)
+        {
+            sampleStep = min(
+                sampleStep,
+                (distance - initialDepth) / (float) _samplesPerRay
+            );
+            initialDepth += random(seed.x + seed.y) * sampleStep;
+        }
+        else
+        {
+            initialDepth = -1.0f;
+        }
+    }
+
+
+    /**
      * Compute a noise value.
      *
      * @arg pos: The x, and y location we are currently processing.
@@ -1165,7 +1361,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     {
         float pixelDepth = depthAOV(0);
         pixelDepth = (
-            pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _depthRamp.w
+            pixelDepth > 0.0f ? (_invertDepth ? 1.0f / pixelDepth : pixelDepth) : _maxDistance
         );
         const float pixelDepthAlpha = 1.0f - depthAOV(3);
 
@@ -1175,8 +1371,6 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float2 seed1 = float2(seedPixel.z, seedPixel.w) + RAND_CONST_1 * pixelLocation;
 
         float4 resultPixel = float4(0.0f);
-
-        const float sampleStep = (_depthRamp.w - _depthRamp.x) / (float) _samplesPerRay;
 
         for (int path=1; path <= _raysPerPixel; path++)
         {
@@ -1192,7 +1386,21 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
 
             // Set the depth to the start of the depth ramp and add a random offset
             // to eliminate layer lines
-            float depth = _depthRamp.x - random(seed0.x + seed0.y) * sampleStep;
+            float depth = _maxDistance;
+            float sampleStep = _maxDistance / (float) _samplesPerRay;
+            computeDepthAndSampleStep(
+                seed0,
+                rayOrigin + rayDirection * _nearPlane,
+                rayDirection,
+                depth,
+                sampleStep
+            );
+
+            if (depth < 0.0f)
+            {
+                continue;
+            }
+
             rayOrigin += depth * rayDirection;
 
             float invertedLastSample = 1.0f;
@@ -1200,7 +1408,16 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             {
                 float ramp = 1.0f;
                 depth += sampleStep;
-                if (depth > pixelDepth)
+                rayOrigin += rayDirection * sampleStep;
+                float adjustedDepth = depth;
+                if (_useCameraDepth)
+                {
+                    adjustedDepth = fabs(matmul(
+                        __inverseCameraWorldMatrix,
+                        float4(rayOrigin.x, rayOrigin.y, rayOrigin.z, 1.0f)
+                    )[2]);
+                }
+                if (adjustedDepth > pixelDepth)
                 {
                     if (pixelDepthAlpha <= 0.0f)
                     {
@@ -1208,7 +1425,6 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     }
                     ramp *= pixelDepthAlpha;
                 }
-                rayOrigin += rayDirection * sampleStep;
 
                 if (_enableSphericalRamp)
                 {
@@ -1242,14 +1458,13 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                         );
                     }
                 }
-
-                // Apply the scaling specified by the planar ramp
-                if (_enablePlanarRamp)
+                else if (_enablePlanarRamp)
                 {
-                    const float minDistanceToPlane = fabs(distanceToPlane(
+                    // Apply the scaling specified by the planar ramp
+                    const float minDistanceToPlane = distanceToPlane(
                         rayOrigin - _planePosition,
                         __planeNormal
-                    ));
+                    );
                     if (
                         minDistanceToPlane < _planarRamp.x
                         || minDistanceToPlane >= _planarRamp.w
@@ -1282,14 +1497,11 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                         );
                     }
                 }
-
-                if (_enableBoxRamp)
+                else if (_enableBoxRamp)
                 {
-                    float3x3 rotMatrix;
-                    rotationMatrix(_boxRampRotation, rotMatrix);
                     const float3 toBoxCenter = rayOrigin - _boxRampPosition;
                     const float minDistanceToBox = distanceToRectangularPrism(
-                        matmul(rotMatrix.invert(), toBoxCenter),
+                        matmul(__inverseBoxRotMatrix, toBoxCenter),
                         _boxRampDimensions.x,
                         _boxRampDimensions.y,
                         _boxRampDimensions.z
@@ -1314,14 +1526,21 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                     }
                 }
 
-                // Apply the scaling specified by the depth ramp
-                if (depth < _depthRamp.y)
+                if (_enableDepthRamp)
                 {
-                    ramp *= (depth - _depthRamp.y) / (_depthRamp.y - _depthRamp.x) + 1.0f;
-                }
-                else if (depth > _depthRamp.z)
-                {
-                    ramp *= (_depthRamp.w - depth) / (_depthRamp.w - _depthRamp.z);
+                    // Apply the scaling specified by the depth ramp
+                    if (adjustedDepth < _depthRamp.y)
+                    {
+                        ramp *= (
+                            (adjustedDepth - _depthRamp.y)
+                            / (_depthRamp.y - _depthRamp.x)
+                            + 1.0f
+                        );
+                    }
+                    else if (adjustedDepth > _depthRamp.z)
+                    {
+                        ramp *= (_depthRamp.w - adjustedDepth) / (_depthRamp.w - _depthRamp.z);
+                    }
                 }
 
                 // Compute the noise value at this position
