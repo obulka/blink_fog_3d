@@ -587,7 +587,7 @@ inline float distanceToRectangularPrism(
 }
 
 
-kernel FogKernel : ImageComputationKernel<ePixelWise>
+kernel SingleSampleFogKernel : ImageComputationKernel<ePixelWise>
 {
     // the input which specifies the format, process is called once per pixel
     // in this image, which also provides random seeds
@@ -696,13 +696,13 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
     void define()
     {
         // Camera params
-        defineParam(_focalLength, "Focal Length", 50.0f);
-        defineParam(_horizontalAperture, "Horizontal Aperture", 24.576f);
-        defineParam(_nearPlane, "Near Plane", 0.1f);
-        defineParam(_farPlane, "Far Plane", 10000.0f);
+        defineParam(_focalLength, "FocalLength", 50.0f);
+        defineParam(_horizontalAperture, "HorizontalAperture", 24.576f);
+        defineParam(_nearPlane, "NearPlane", 0.1f);
+        defineParam(_farPlane, "FarPlane", 10000.0f);
         defineParam(
             _cameraWorldMatrix,
-            "Camera World Matrix",
+            "CameraWorldMatrix",
             float4x4(
                 1, 0, 0, 0,
                 0, 1, 0, 0,
@@ -710,60 +710,60 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
                 0, 0, 0, 1
             )
         );
-        defineParam(_focalDistance, "Focal Distance", 4.0f);
+        defineParam(_focalDistance, "FocalDistance", 4.0f);
         defineParam(_fStop, "fstop", 16.0f);
-        defineParam(_depthOfFieldEnabled, "Enable Depth Of Field", true);
-        defineParam(_latLong, "Output LatLong", false);
-        defineParam(_useCameraDepth, "Use Camera Depth", false);
+        defineParam(_depthOfFieldEnabled, "EnableDepthOfField", true);
+        defineParam(_latLong, "OutputLatLong", false);
+        defineParam(_useCameraDepth, "UseCameraDepth", false);
 
         // Image params
-        defineParam(_formatHeight, "Screen Height", 2160.0f);
-        defineParam(_formatWidth, "Screen Width", 3840.0f);
-        defineParam(_individualSample, "Individual Sample", 0.0f);
+        defineParam(_formatHeight, "ScreenHeight", 2160.0f);
+        defineParam(_formatWidth, "ScreenWidth", 3840.0f);
+        defineParam(_individualSample, "IndividualSample", 0.0f);
         defineParam(_density, "Density", 1.0f);
-        defineParam(_samplesPerRay, "Samples Per Ray", 5);
+        defineParam(_samplesPerRay, "SamplesPerRay", 5);
 
-        defineParam(_enableDepthRamp, "Enable Depth Ramp", true);
-        defineParam(_depthRamp, "Sample Depth Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enableDepthRamp, "EnableDepthRamp", true);
+        defineParam(_depthRamp, "SampleDepthRamp", float4(5.0f, 10.0f, 15.0f, 20.0f));
 
-        defineParam(_planarRamp, "Sample Planar Ramp", float4(5.0f, 10.0f, 15.0f, 20.0f));
-        defineParam(_enablePlanarRamp, "Enable Planar Ramp", false);
-        defineParam(_planePosition, "Plane Position", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_planeNormal, "Plane Normal", float3(0.0f, 1.0f, 0.0f));
-        defineParam(_planarFalloffPower, "Planar Falloff Power", 0.0f);
-        defineParam(_planarFalloffOffset, "Planar Falloff Offset", 0.0f);
+        defineParam(_planarRamp, "SamplePlanarRamp", float4(5.0f, 10.0f, 15.0f, 20.0f));
+        defineParam(_enablePlanarRamp, "EnablePlanarRamp", false);
+        defineParam(_planePosition, "PlanePosition", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_planeNormal, "PlaneNormal", float3(0.0f, 1.0f, 0.0f));
+        defineParam(_planarFalloffPower, "PlanarFalloffPower", 0.0f);
+        defineParam(_planarFalloffOffset, "PlanarFalloffOffset", 0.0f);
 
-        defineParam(_enableSphericalRamp, "Enable Spherical Ramp", false);
-        defineParam(_sphericalRampPosition, "Spherical Ramp Position", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_sphericalRampRadii, "Spherical Ramp Radii", float2(1.0f, 2.0f));
-        defineParam(_sphericalFalloffPower, "Spherical Falloff Power", 0.0f);
-        defineParam(_sphericalFalloffOffset, "Spherical Falloff Offset", 0.0f);
+        defineParam(_enableSphericalRamp, "EnableSphericalRamp", false);
+        defineParam(_sphericalRampPosition, "SphericalRampPosition", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_sphericalRampRadii, "SphericalRampRadii", float2(1.0f, 2.0f));
+        defineParam(_sphericalFalloffPower, "SphericalFalloffPower", 0.0f);
+        defineParam(_sphericalFalloffOffset, "SphericalFalloffOffset", 0.0f);
 
-        defineParam(_boxRampPosition, "Box Ramp Position", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_boxRampRotation, "Box Ramp Rotation", float3(0.0f, 0.0f, 0.0f));
-        defineParam(_boxRampDimensions, "Box Ramp Dimensions", float3(1.0f, 1.0f, 1.0f));
-        defineParam(_boxRampFalloff, "Box Ramp Falloff", 1.0f);
-        defineParam(_enableBoxRamp, "Enable Box Ramp", false);
-        defineParam(_boxFalloffPower, "Box Falloff Power", 0.0f);
-        defineParam(_boxFalloffOffset, "Box Falloff Offset", 0.0f);
+        defineParam(_boxRampPosition, "BoxRampPosition", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_boxRampRotation, "BoxRampRotation", float3(0.0f, 0.0f, 0.0f));
+        defineParam(_boxRampDimensions, "BoxRampDimensions", float3(1.0f, 1.0f, 1.0f));
+        defineParam(_boxRampFalloff, "BoxRampFalloff", 1.0f);
+        defineParam(_enableBoxRamp, "EnableBoxRamp", false);
+        defineParam(_boxFalloffPower, "BoxFalloffPower", 0.0f);
+        defineParam(_boxFalloffOffset, "BoxFalloffOffset", 0.0f);
 
-        defineParam(_secondSample, "Do Second Sample", false);
+        defineParam(_secondSample, "DoSecondSample", false);
 
-        defineParam(_hitTolerance, "Hit Tolerance", 0.001f);
-        defineParam(_maxDistance, "Max Distance", 1000000.0f);
+        defineParam(_hitTolerance, "HitTolerance", 0.001f);
+        defineParam(_maxDistance, "MaxDistance", 1000000.0f);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
-        defineParam(_noiseType, "Noise Type", 0);
+        defineParam(_noiseType, "NoiseType", 0);
         defineParam(_translation, "Translation", float3(0.0f, 0.0f, 0.0f));
         defineParam(_octaves, "Octaves", 8.0f);
         defineParam(_lacunarity, "Lacunarity", 3.0f);
         defineParam(_gain, "Gain", 0.5f);
         defineParam(_gamma, "Gamma", 0.5f);
-        defineParam(_lowFrequencyScale, "Low Frequency Scale", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_highFrequencyScale, "High Frequency Scale", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_lowFrequencyTranslation, "Low Frequency Translation", float4(0.0f, 0.0f, 0.0f, 0.0f));
-        defineParam(_highFrequencyTranslation, "High Frequency Translation", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_lowFrequencyScale, "LowFrequencyScale", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_highFrequencyScale, "HighFrequencyScale", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_lowFrequencyTranslation, "LowFrequencyTranslation", float4(0.0f, 0.0f, 0.0f, 0.0f));
+        defineParam(_highFrequencyTranslation, "HighFrequencyTranslation", float4(0.0f, 0.0f, 0.0f, 0.0f));
     }
 
 
@@ -780,8 +780,9 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
             _nearPlane,
             _farPlane
         ).invert();
+        // Dumb af but trust that changing the following will either break nuke 12 or 15
         __inverseCameraWorldMatrix = _cameraWorldMatrix;
-        __inverseCameraWorldMatrix.invert();
+        __inverseCameraWorldMatrix = __inverseCameraWorldMatrix.invert();
 
         __aperture = fStopToAperture(_fStop, _focalLength);
 
