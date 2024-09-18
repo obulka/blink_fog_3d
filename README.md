@@ -12,6 +12,20 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 2.0.0
+
+- Depth ramp is now optional
+  - This allows you to use the shape options fully in world space without worrying about them leaving the depth range during a camera move
+  - If shapes are used we now start sampling noise where the ray first intersects the shape and stop where the ray exits the shape
+    - This enables much more optimal sampling
+- The various ramp groups (other than depth) have been simplified into a single dropdown menu
+- The planar ramp has been replace with 'in', 'out', and 'falloff' knobs
+  - All of these values are expected to be a positive distance from the plane, where in is the distance below, and out is the distance above
+  - The distance from the plane can now be specified on either side individually rather than being mirrored
+- If the depth was in camera space and the holdout was far from the camera and moved from the center of frame to the edge, it would appear to move in front of the fog
+  - Added a 'camera space' checkbox so that if the depth is in camera space the sampling can account for this
+- Ensured that node and example work in Nuke 12 and 15
+
 ### New in Version 1.8.0
 
 - Added exponential falloff to sphere, plane, and box ramps
