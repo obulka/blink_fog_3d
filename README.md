@@ -12,6 +12,12 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 2.1.0
+
+- Added a 'max iterations' knob to further restrict the number of ray marching steps
+- Fixed bug when objects were > 100000 units away from camera which, due to loss of precision, would cause the normal to be nan
+- Ensured that 'hit tolerance' is positive
+
 ### New in Version 2.0.0
 
 - Depth ramp is now optional
