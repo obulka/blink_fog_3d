@@ -664,6 +664,7 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
         // Raymarch parameters
         float _hitTolerance;
         float _maxDistance;
+        int _maxIterations;
 
     local:
         // These local variables are not exposed to the user.
@@ -752,6 +753,7 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
 
         defineParam(_hitTolerance, "HitTolerance", 0.001f);
         defineParam(_maxDistance, "MaxDistance", 1000000.0f);
+        defineParam(_maxIterations, "MaxIterations", 1000000);
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -1244,20 +1246,20 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
      *
      * @returns: The normalized surface normal.
      */
-    float3 estimateSurfaceNormal(const float3 &point)
+    float3 estimateSurfaceNormal(const float3 &point, float pixelFootprint)
     {
         return normalize(
             __offset0 * getMinDistanceToObjectInScene(
-                point + __offset0 * _hitTolerance
+                point + __offset0 * pixelFootprint
             )
             + __offset1 * getMinDistanceToObjectInScene(
-                point + __offset1 * _hitTolerance
+                point + __offset1 * pixelFootprint
             )
             + __offset2 * getMinDistanceToObjectInScene(
-                point + __offset2 * _hitTolerance
+                point + __offset2 * pixelFootprint
             )
             + __offset3 * getMinDistanceToObjectInScene(
-                point + __offset3 * _hitTolerance
+                point + __offset3 * pixelFootprint
             )
         );
     }
@@ -1278,6 +1280,7 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
         else if (!__enableRaymarching)
         {
             initialDepth = 0.0f;
+            sampleStep = _maxDistance / (float) _samplesPerRay;
         }
 
         if (!__enableRaymarching)
@@ -1291,9 +1294,11 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
         float stepDistance = 0.0f;
         bool hitSurface = false;
         float3 position = rayOrigin;
+        int iterations = 0;
 
-        while (distance < fabs(_maxDistance))
+        while (iterations < fabs(_maxIterations) && distance < fabs(_maxDistance))
         {
+            iterations++;
             const float signedDistance = getMinDistanceToObjectInScene(position);
 
             if(distance == 0.0f && signedDistance <= 0.0f)
@@ -1306,7 +1311,7 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
             distance += stepDistance;
             position += stepDistance * rayDirection;
 
-            if (stepDistance < pixelFootprint)
+            if (stepDistance <= pixelFootprint)
             {
                 if (hitSurface)
                 {
@@ -1314,17 +1319,13 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
                         sampleStep,
                         (distance - initialDepth) / (float) _samplesPerRay
                     );
-                    if (sampleStep == 0.0f)
-                    {
-                        sampleStep = _maxDistance / (float) _samplesPerRay;
-                    }
                     initialDepth += random(seed.x + seed.y) * sampleStep;
                     return;
                 }
                 hitSurface = true;
                 initialDepth = min(initialDepth, distance);
 
-                const float3 normal = estimateSurfaceNormal(position + stepDistance * rayDirection);
+                const float3 normal = estimateSurfaceNormal(position, pixelFootprint);
                 position += 2.0f * pixelFootprint * (rayDirection - normal);
                 pixelFootprint = _hitTolerance;
                 continue;
@@ -1340,6 +1341,7 @@ kernel FogKernelNoDepth : ImageComputationKernel<ePixelWise>
                 (distance - initialDepth) / (float) _samplesPerRay
             );
             initialDepth += random(seed.x + seed.y) * sampleStep;
+            initialDepth = distance;
         }
         else
         {
