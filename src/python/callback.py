@@ -113,10 +113,9 @@ class BlinkFogKnobManager(KnobManager):
     def __init__(self):
         super(BlinkFogKnobManager, self).__init__()
 
-    def handle_node_created(self):
-        super(BlinkFogKnobManager, self).handle_node_created()
-
-        self._node.knob("pixel_offset").setFlag(0x00008000) # Disable the viewer picker
+    # def handle_node_created(self):
+    #     super(BlinkFogKnobManager, self).handle_node_created()
+    #     self._node.knob("pixel_offset").setFlag(0x00008000) # Disable the viewer picker
 
     def _add_deep_samples(self, samples_to_add, current_deep_samples):
         even = current_deep_samples % 2 == 0
