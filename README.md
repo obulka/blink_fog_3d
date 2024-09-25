@@ -12,6 +12,16 @@ You can add the `src/python` directory to your `NUKE_PATH` to add the gizmo to y
 
 You can also pass a depth AOV to the node to create holdouts.
 
+### New in Version 2.3.0
+
+- Removed the 'pixel offset' knob and inherit that functionality from the camera input
+  - Added support for 'window translate' and 'window scale' knobs on the camera input
+
+### New in Version 2.2.0
+
+- Added a 'pixel offset' knob to effectively translate the image window before rendering, this can be animated to match camera shake.
+- Fixed a bug where shapes would dim when depth ramp enabled because sampling started at beginning of depth range
+
 ### New in Version 2.1.0
 
 - Added a 'max iterations' knob to further restrict the number of ray marching steps
