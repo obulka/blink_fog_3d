@@ -669,6 +669,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float _maxDistance;
         int _maxIterations;
 
+        float2 _pixelOffset;
+
     local:
         // These local variables are not exposed to the user.
         float4x4 __inverseCameraProjectionMatrix;
@@ -757,6 +759,8 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         defineParam(_hitTolerance, "HitTolerance", 0.001f);
         defineParam(_maxDistance, "MaxDistance", 1000000.0f);
         defineParam(_maxIterations, "MaxIterations", 1000000);
+
+        defineParam(_pixelOffset, "PixelOffset", float2(0.0f, 0.0f));
 
         // Noise Parameters
         defineParam(_size, "Size", 20.0f);
@@ -1276,19 +1280,18 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         float &initialDepth,
         float &sampleStep
     ) {
-        if (_enableDepthRamp)
-        {
-            sampleStep = __depthSampleStep;
-            initialDepth = _depthRamp.x;
-        }
-        else if (!__enableRaymarching)
-        {
-            initialDepth = 0.0f;
-            sampleStep = _maxDistance / (float) _samplesPerRay;
-        }
-
         if (!__enableRaymarching)
         {
+            if (_enableDepthRamp)
+            {
+                sampleStep = __depthSampleStep;
+                initialDepth = _depthRamp.x;
+            }
+            else
+            {
+                initialDepth = 0.0f;
+                sampleStep = _maxDistance / (float) _samplesPerRay;
+            }
             initialDepth += random(seed.x + seed.y) * sampleStep;
             return;
         }
@@ -1367,7 +1370,7 @@ kernel FogKernel : ImageComputationKernel<ePixelWise>
         );
         const float pixelDepthAlpha = 1.0f - depthAOV(3);
 
-        float2 pixelLocation = float2(pos.x, pos.y);
+        float2 pixelLocation = float2(pos.x, pos.y) + _pixelOffset;
         SampleType(seeds) seedPixel = seeds();
         float2 seed0 = float2(seedPixel.x, seedPixel.y) + RAND_CONST_0 * pixelLocation;
         float2 seed1 = float2(seedPixel.z, seedPixel.w) + RAND_CONST_1 * pixelLocation;

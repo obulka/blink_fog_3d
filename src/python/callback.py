@@ -3,6 +3,18 @@
 # This file is released under the "MIT License Agreement".
 # Please see the LICENSE.md file that should have been included as part
 # of this package.
+"""Knob management for blink fog.
+
+# Add on knob changed callback to group:
+nuke.toNode("sdf_primitive").knob("knobChanged").setValue(
+    "__import__('callback', fromlist='BlinkFogKnobManager').BlinkFogKnobManager().handle_knob_changed()"
+)
+
+# Add on node create callback to group:
+nuke.toNode("sdf_primitive").knob("onCreate").setValue(
+    "__import__('callback', fromlist='BlinkFogKnobManager').BlinkFogKnobManager().handle_node_created()"
+)
+"""
 import logging
 
 import nuke
@@ -100,6 +112,11 @@ class BlinkFogKnobManager(KnobManager):
 
     def __init__(self):
         super(BlinkFogKnobManager, self).__init__()
+
+    def handle_node_created(self):
+        super(BlinkFogKnobManager, self).handle_node_created()
+
+        self._node.knob("pixel_offset").setFlag(0x00008000) # Disable the viewer picker
 
     def _add_deep_samples(self, samples_to_add, current_deep_samples):
         even = current_deep_samples % 2 == 0
